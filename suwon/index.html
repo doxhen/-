@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#00529b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="2026 수원삼성 블루윙즈 전 경기 기록과 나의 직관 승률 체크">
+<title>수원삼성 직관 승률 | 2026</title>
+<style>
+  :root{
+    --blue:#00529b;
+    --blue-dark:#00376a;
+    --blue-deep:#00294f;
+    --blue-soft:#e8f1fa;
+    --blue-line:#cfe0f0;
+    --red:#d71920;
+    --gold:#c9a227;
+    --ink:#101828;
+    --muted:#667085;
+    --line:#e6eaf0;
+    --bg:#eef3f9;
+    --white:#fff;
+    --radius:16px;
+    --shadow:0 1px 2px rgba(16,24,40,.06), 0 6px 18px rgba(16,24,40,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-text-size-adjust:100%;
+    line-height:1.45;
+    padding-bottom:calc(28px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:0 14px}
+
+  /* ── header ───────────────────────────── */
+  header.hero{
+    background:
+      radial-gradient(120% 90% at 100% 0%, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 55%),
+      linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 62%, var(--blue-deep) 100%);
+    color:#fff;
+    padding:calc(20px + env(safe-area-inset-top)) 0 22px;
+    border-bottom:3px solid var(--red);
+  }
+  .brand{display:flex;align-items:center;gap:11px}
+  .crest{
+    width:46px;height:46px;flex:0 0 46px;border-radius:50%;
+    background:#fff;display:grid;place-items:center;font-size:24px;
+    box-shadow:0 3px 10px rgba(0,0,0,.25);
+  }
+  .brand h1{margin:0;font-size:19px;letter-spacing:-.4px;font-weight:800}
+  .brand p{margin:2px 0 0;font-size:12px;opacity:.82;letter-spacing:-.2px}
+  .seasonbar{
+    margin-top:14px;display:flex;gap:6px;flex-wrap:wrap;font-size:11.5px;
+  }
+  .seasonbar span{
+    background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);
+    padding:4px 9px;border-radius:999px;font-weight:600;letter-spacing:-.2px;
+  }
+  .seasonbar span.gold{background:rgba(201,162,39,.9);border-color:rgba(201,162,39,.9);color:#251d00;font-weight:800}
+
+  /* ── cards ────────────────────────────── */
+  .card{
+    background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:16px;margin-top:12px;border:1px solid rgba(16,24,40,.04);
+  }
+  .card h2{
+    margin:0 0 12px;font-size:13.5px;font-weight:800;letter-spacing:-.3px;
+    display:flex;align-items:center;gap:6px;color:var(--blue-dark);
+  }
+  .card h2 .hint{font-weight:600;color:var(--muted);font-size:11.5px;margin-left:auto}
+
+  /* 승률 링 */
+  .hero-top{display:flex;align-items:center;gap:16px}
+  .ring{
+    --p:0;
+    width:118px;height:118px;flex:0 0 118px;border-radius:50%;
+    background:conic-gradient(var(--blue) calc(var(--p) * 1%), #e4ebf3 0);
+    display:grid;place-items:center;position:relative;
+    transition:background .35s ease;
+  }
+  .ring-in{
+    width:92px;height:92px;border-radius:50%;background:#fff;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    box-shadow:inset 0 0 0 1px rgba(0,82,155,.08);
+  }
+  .ring-in .num{font-size:28px;font-weight:900;letter-spacing:-1.2px;color:var(--blue-dark);line-height:1}
+  .ring-in .num i{font-size:14px;font-style:normal;font-weight:800;margin-left:1px}
+  .ring-in small{font-size:10.5px;color:var(--muted);font-weight:700;margin-top:3px}
+  .hero-side{flex:1;min-width:0}
+  .record{font-size:16px;font-weight:800;letter-spacing:-.4px}
+  .record b{color:var(--blue)}
+  .rate-note{font-size:11.5px;color:var(--muted);margin-top:2px;letter-spacing:-.2px}
+  .pillrow{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+  .pill{
+    font-size:11px;font-weight:700;color:var(--blue-dark);background:var(--blue-soft);
+    border-radius:8px;padding:5px 8px;letter-spacing:-.2px;
+  }
+  .pill b{font-weight:900}
+  .pill.red{background:#fdecec;color:#a11218}
+  .pill.gray{background:#f2f4f7;color:#475467}
+
+  /* 홈/원정 */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+  .mini{
+    background:#f7fafd;border:1px solid var(--line);border-radius:12px;padding:10px 11px;
+  }
+  .mini .lbl{font-size:11px;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:4px}
+  .mini .val{font-size:20px;font-weight:900;color:var(--blue-dark);letter-spacing:-.6px;margin-top:1px}
+  .mini .val i{font-size:12px;font-style:normal;font-weight:800;color:var(--muted)}
+  .mini .rec{font-size:11px;color:var(--muted);font-weight:600}
+  .bar{height:6px;border-radius:99px;background:#e4ebf3;overflow:hidden;margin-top:7px}
+  .bar > i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#2f7cc4,var(--blue));transition:width .35s ease}
+  .mini.away .bar > i{background:linear-gradient(90deg,#7f8fa4,#556480)}
+
+  /* 2칸 통계 */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stat .lbl{font-size:11.5px;font-weight:800;color:var(--muted)}
+  .stat .val{font-size:24px;font-weight:900;letter-spacing:-.8px;color:var(--blue-dark);line-height:1.15}
+  .stat .val i{font-size:13px;font-style:normal;font-weight:800;color:var(--muted);margin-left:2px}
+  .stat .sub{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:-.2px}
+  .stat + .stat{border-left:1px solid var(--line);padding-left:12px}
+
+  /* 코멘트 */
+  .comment{background:linear-gradient(180deg,#fffdf5,#fff);border-color:#f0e4bf}
+  .comment h2{color:#8a6d00}
+  .comment h2 .hint{color:#a0894c}
+  .comment p{margin:0;font-size:13px;font-weight:600;letter-spacing:-.3px;color:#3b3423}
+  .comment .big{display:block;font-size:15px;font-weight:900;color:#111;margin-bottom:3px;letter-spacing:-.4px}
+
+  /* ── 필터/정렬 ────────────────────────── */
+  .toolbar{position:sticky;top:0;z-index:20;background:rgba(238,243,249,.94);backdrop-filter:blur(8px);padding:10px 0 8px;margin-top:4px}
+  .filters{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:2px}
+  .filters::-webkit-scrollbar{display:none}
+  .filters button{
+    flex:0 0 auto;font:inherit;font-size:12.5px;font-weight:800;letter-spacing:-.3px;
+    padding:8px 12px;border-radius:999px;border:1px solid var(--line);
+    background:#fff;color:#475467;cursor:pointer;transition:.15s;
+    min-height:36px;
+  }
+  .filters button[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(0,82,155,.28)}
+  .sortrow{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px}
+  .sortrow .cnt{font-size:11.5px;color:var(--muted);font-weight:700}
+  .sortbtn{
+    font:inherit;font-size:11.5px;font-weight:800;color:var(--blue-dark);background:var(--blue-soft);
+    border:none;border-radius:8px;padding:6px 9px;cursor:pointer;min-height:32px;
+  }
+
+  /* ── 경기 목록 ────────────────────────── */
+  ul.matches{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  li.match{
+    background:#fff;border-radius:13px;border:1px solid var(--line);
+    padding:11px 12px;display:flex;align-items:center;gap:10px;
+    transition:border-color .15s, box-shadow .15s, background .15s;
+  }
+  li.match.on{border-color:var(--blue);background:linear-gradient(180deg,#f5faff,#fff);box-shadow:0 0 0 1px rgba(0,82,155,.18)}
+  li.match.up{background:#fbfcfe}
+  .m-date{flex:0 0 46px;text-align:center}
+  .m-date .d{font-size:14.5px;font-weight:900;letter-spacing:-.6px;color:#1d2939}
+  .m-date .w{font-size:10.5px;font-weight:700;color:var(--muted)}
+  .m-date .y{font-size:9.5px;font-weight:700;color:#98a2b3}
+  .m-body{flex:1;min-width:0}
+  .m-top{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .tag{font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;letter-spacing:-.2px;white-space:nowrap}
+  .tag.home{background:var(--blue-soft);color:var(--blue-dark)}
+  .tag.away{background:#eef1f5;color:#475467}
+  .tag.cup{background:#fff4e5;color:#a15c00}
+  .tag.round{background:transparent;color:#98a2b3;padding:2px 0;font-weight:700}
+  .m-opp{font-size:14px;font-weight:800;letter-spacing:-.4px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .m-ven{font-size:10.5px;color:var(--muted);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:-.2px}
+  .m-score{flex:0 0 auto;text-align:right}
+  .m-score .s{font-size:16px;font-weight:900;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
+  .m-score .s dim{color:#c3cbd6}
+  .res{display:inline-block;font-size:10.5px;font-weight:900;padding:2px 7px;border-radius:6px;margin-top:2px;letter-spacing:-.2px}
+  .res.W{background:var(--blue);color:#fff}
+  .res.D{background:#e9edf2;color:#475467}
+  .res.L{background:#fdecec;color:#b42318}
+  .res.S{background:#fff4e5;color:#a15c00}
+  .toggle{
+    flex:0 0 auto;width:44px;height:44px;border-radius:12px;border:1.5px solid var(--line);
+    background:#fff;color:#98a2b3;display:grid;place-items:center;cursor:pointer;
+    transition:.15s;font-size:17px;line-height:1;
+  }
+  .toggle:active{transform:scale(.94)}
+  .toggle[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 3px 10px rgba(0,82,155,.3)}
+  .toggle[aria-pressed="true"]::before{content:"✓";font-weight:900}
+  .toggle[aria-pressed="false"]::before{content:"+";font-weight:700;font-size:20px}
+  .empty{text-align:center;color:var(--muted);font-size:12.5px;font-weight:600;padding:26px 10px}
+
+  /* ── 하단 액션 ────────────────────────── */
+  .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .btn{
+    font:inherit;font-size:13px;font-weight:800;letter-spacing:-.3px;padding:12px 10px;border-radius:12px;
+    border:1px solid var(--blue-line);background:#fff;color:var(--blue-dark);cursor:pointer;min-height:46px;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+  }
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 3px 10px rgba(0,82,155,.25)}
+  .btn:active{transform:scale(.985)}
+  .btn.ghost{color:#b42318;border-color:#f3d0d0;background:#fffafa}
+
+  /* 시즌 요약 */
+  .season{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
+  .season div{background:#f7fafd;border:1px solid var(--line);border-radius:10px;padding:8px 4px}
+  .season b{display:block;font-size:15px;font-weight:900;color:var(--blue-dark);letter-spacing:-.5px}
+  .season span{font-size:10px;font-weight:700;color:var(--muted)}
+  .next{
+    margin-top:10px;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;
+    border-radius:12px;padding:12px 13px;display:flex;align-items:center;gap:10px;
+  }
+  .next .dd{font-size:11px;font-weight:800;background:rgba(255,255,255,.2);padding:5px 8px;border-radius:8px;white-space:nowrap}
+  .next .txt{font-size:12.5px;font-weight:800;letter-spacing:-.3px;line-height:1.35}
+  .next .txt em{display:block;font-style:normal;font-weight:600;font-size:10.5px;opacity:.8}
+
+  footer.note{font-size:10.5px;color:#7b8794;line-height:1.6;padding:14px 4px 0;letter-spacing:-.1px}
+  footer.note b{color:#556170}
+
+  /* 토스트 */
+  #toast{
+    position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,20px);
+    background:#101828;color:#fff;font-size:12.5px;font-weight:700;padding:10px 16px;border-radius:999px;
+    opacity:0;pointer-events:none;transition:.25s;z-index:100;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.25);
+  }
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="brand">
+      <div class="crest">⚽</div>
+      <div>
+        <h1>수원삼성 직관 승률</h1>
+        <p>2026시즌 · 수원 삼성 블루윙즈</p>
+      </div>
+    </div>
+    <div class="seasonbar">
+      <span class="gold">2026 K리그2 우승 🏆</span>
+      <span>1부 승격</span>
+      <span>리그 21승 6무 4패</span>
+      <span>승점 69</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- 대시보드 -->
+  <section class="card" aria-labelledby="dashTitle">
+    <h2 id="dashTitle">직관 성적표 <span class="hint">내가 간 경기만 계산</span></h2>
+
+    <div class="hero-top">
+      <div class="ring" id="ring" style="--p:0">
+        <div class="ring-in">
+          <div class="num"><span id="rate">–</span><i>%</i></div>
+          <small>직관 승률</small>
+        </div>
+      </div>
+      <div class="hero-side">
+        <div class="record" id="record">0전 0승 0무 0패</div>
+        <div class="rate-note" id="rateNote">직관한 경기가 아직 없어요</div>
+        <div class="pillrow">
+          <span class="pill">무승부 제외 <b id="rateND">–</b></span>
+          <span class="pill gray">팀 리그 승률 <b>67.7%</b></span>
+          <span class="pill" id="diffPill" style="display:none">차이 <b id="diff">–</b></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="mini">
+        <div class="lbl">🏟 홈 직관</div>
+        <div class="val"><span id="homeRate">–</span><i>%</i></div>
+        <div class="rec" id="homeRec">0전 0승 0무 0패</div>
+        <div class="bar"><i id="homeBar" style="width:0%"></i></div>
+      </div>
+      <div class="mini away">
+        <div class="lbl">🚌 원정 직관</div>
+        <div class="val"><span id="awayRate">–</span><i>%</i></div>
+        <div class="rec" id="awayRec">0전 0승 0무 0패</div>
+        <div class="bar"><i id="awayBar" style="width:0%"></i></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="grid2">
+      <div class="stat">
+        <div class="lbl">직관 횟수</div>
+        <div class="val"><span id="attCnt">0</span><i>경기</i></div>
+        <div class="sub" id="attSub">종료 32경기 중 0경기</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">최다 직관 연승</div>
+        <div class="val"><span id="streak">–</span></div>
+        <div class="sub" id="streakSub">현재 –</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card comment">
+    <h2>🧚 승리 요정 코멘트 <span class="hint">직관할수록 갱신</span></h2>
+    <p id="comment"><span class="big">직관 기록을 체크해 보세요</span>아래 경기 목록에서 내가 다녀온 경기의 ✓ 를 누르면 승률이 바로 계산됩니다.</p>
+  </section>
+
+  <!-- 필터 -->
+  <div class="toolbar">
+    <div class="filters" id="filters" role="group" aria-label="경기 필터">
+      <button type="button" data-f="all" aria-pressed="true">전체</button>
+      <button type="button" data-f="home" aria-pressed="false">홈</button>
+      <button type="button" data-f="away" aria-pressed="false">원정</button>
+      <button type="button" data-f="att" aria-pressed="false">직관한 경기만</button>
+      <button type="button" data-f="upcoming" aria-pressed="false">예정</button>
+    </div>
+    <div class="sortrow">
+      <span class="cnt" id="listCnt">33경기</span>
+      <button type="button" class="sortbtn" id="sortBtn">최신순 ↓</button>
+    </div>
+  </div>
+
+  <ul class="matches" id="matchList"></ul>
+
+  <div class="actions">
+    <button type="button" class="btn primary" id="shareBtn">📋 직관 기록 복사</button>
+    <button type="button" class="btn ghost" id="resetBtn">↺ 전체 초기화</button>
+  </div>
+
+  <section class="card" style="margin-top:14px">
+    <h2>2026 시즌 정리 <span class="hint" id="asOf"></span></h2>
+    <div class="season">
+      <div><b>31</b><span>경기</span></div>
+      <div><b>21</b><span>승</span></div>
+      <div><b>6</b><span>무</span></div>
+      <div><b>4</b><span>패</span></div>
+    </div>
+    <div class="next">
+      <span class="dd" id="dday">D-6</span>
+      <div class="txt">전남 드래곤즈 vs 수원삼성 <em>11/29(일) 14:00 · 순천팔마경기장 · K리그2 34R(최종전)</em></div>
+    </div>
+  </section>
+
+  <footer class="note">
+    <b>기록 기준</b><br>
+    · 승률 = 승 ÷ 직관한 종료 경기 수 (무승부 포함). 무승부 제외 승률은 승 ÷ (승+패).<br>
+    · 직관 체크한 경기 중 예정 경기는 승률 계산에서 빠집니다. (종료 32경기 = 리그 31 + 코리아컵 1)<br>
+    · 경기 결과·일정은 2026 K리그2 실제 기록(리그 34라운드 중 12R 5/16·27R 9/19는 수원삼성 휴식, 코리아컵 2R 7/15 부산교통공사전 포함)입니다.<br>
+    · 10/18 화성전(홈)은 관람 기록이 확인되어 기본으로 체크되어 있어요. 다르면 꺼 주세요.<br>
+    · 체크 상태는 이 브라우저(localStorage)에만 저장됩니다.
+  </footer>
+
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ─── 2026시즌 실제 경기 기록 ────────────────────────
+     gf/ga = 수원삼성 기준 득점/실점, r = W 승 / D 무 / L 패 / S 예정
+     home: true 홈, false 원정 */
+  var MATCHES = [
+    {id:"r1",  date:"2026-02-28", comp:"K리그2", round:"1R",  home:true,  opp:"서울 이랜드",     gf:2, ga:1, r:"W", ven:"수원월드컵경기장"},
+    {id:"r2",  date:"2026-03-07", comp:"K리그2", round:"2R",  home:false, opp:"파주 프런티어",   gf:1, ga:0, r:"W", ven:"파주스타디움"},
+    {id:"r3",  date:"2026-03-14", comp:"K리그2", round:"3R",  home:true,  opp:"전남 드래곤즈",   gf:2, ga:0, r:"W", ven:"수원월드컵경기장"},
+    {id:"r4",  date:"2026-03-21", comp:"K리그2", round:"4R",  home:false, opp:"김해 FC 2008",    gf:3, ga:0, r:"W", ven:"김해종합운동장"},
+    {id:"r5",  date:"2026-03-28", comp:"K리그2", round:"5R",  home:false, opp:"용인 FC",         gf:1, ga:0, r:"W", ven:"용인미르스타디움"},
+    {id:"r6",  date:"2026-04-05", comp:"K리그2", round:"6R",  home:true,  opp:"충북 청주",       gf:0, ga:0, r:"D", ven:"수원월드컵경기장"},
+    {id:"r7",  date:"2026-04-12", comp:"K리그2", round:"7R",  home:true,  opp:"김포 FC",         gf:0, ga:1, r:"L", ven:"수원월드컵경기장"},
+    {id:"r8",  date:"2026-04-18", comp:"K리그2", round:"8R",  home:false, opp:"경남 FC",         gf:1, ga:0, r:"W", ven:"창원축구센터"},
+    {id:"r9",  date:"2026-04-25", comp:"K리그2", round:"9R",  home:true,  opp:"부산 아이파크",   gf:3, ga:2, r:"W", ven:"수원월드컵경기장"},
+    {id:"r10", date:"2026-05-03", comp:"K리그2", round:"10R", home:false, opp:"수원 FC",         gf:1, ga:3, r:"L", ven:"수원종합운동장"},
+    {id:"r11", date:"2026-05-09", comp:"K리그2", round:"11R", home:true,  opp:"대구 FC",         gf:0, ga:0, r:"D", ven:"수원월드컵경기장"},
+    {id:"r13", date:"2026-05-25", comp:"K리그2", round:"13R", home:true,  opp:"천안 시티",       gf:3, ga:2, r:"W", ven:"수원월드컵경기장"},
+    {id:"r14", date:"2026-05-30", comp:"K리그2", round:"14R", home:false, opp:"충남 아산",       gf:1, ga:2, r:"L", ven:"이순신종합운동장"},
+    {id:"r15", date:"2026-06-06", comp:"K리그2", round:"15R", home:false, opp:"화성 FC",         gf:2, ga:1, r:"W", ven:"화성종합경기타운"},
+    {id:"r16", date:"2026-07-04", comp:"K리그2", round:"16R", home:true,  opp:"성남 FC",         gf:1, ga:0, r:"W", ven:"수원월드컵경기장"},
+    {id:"r17", date:"2026-07-11", comp:"K리그2", round:"17R", home:false, opp:"안산 그리너스",   gf:1, ga:2, r:"L", ven:"안산와~스타디움"},
+    {id:"cup", date:"2026-07-15", comp:"코리아컵", round:"2R", home:false, opp:"부산교통공사",   gf:1, ga:2, r:"L", ven:"양산종합운동장", extra:"64강 · 연장"},
+    {id:"r18", date:"2026-07-19", comp:"K리그2", round:"18R", home:true,  opp:"파주 프런티어",   gf:0, ga:0, r:"D", ven:"수원월드컵경기장"},
+    {id:"r19", date:"2026-07-25", comp:"K리그2", round:"19R", home:false, opp:"부산 아이파크",   gf:4, ga:1, r:"W", ven:"구덕운동장"},
+    {id:"r20", date:"2026-08-01", comp:"K리그2", round:"20R", home:false, opp:"충북 청주",       gf:2, ga:2, r:"D", ven:"청주종합운동장"},
+    {id:"r21", date:"2026-08-07", comp:"K리그2", round:"21R", home:true,  opp:"김해 FC 2008",    gf:1, ga:0, r:"W", ven:"수원월드컵경기장"},
+    {id:"r22", date:"2026-08-15", comp:"K리그2", round:"22R", home:true,  opp:"수원 FC",         gf:2, ga:2, r:"D", ven:"수원월드컵경기장"},
+    {id:"r23", date:"2026-08-22", comp:"K리그2", round:"23R", home:false, opp:"천안 시티",       gf:1, ga:0, r:"W", ven:"천안종합운동장"},
+    {id:"r24", date:"2026-08-29", comp:"K리그2", round:"24R", home:false, opp:"김포 FC",         gf:4, ga:1, r:"W", ven:"김포솔터축구장"},
+    {id:"r25", date:"2026-09-06", comp:"K리그2", round:"25R", home:true,  opp:"충남 아산",       gf:2, ga:0, r:"W", ven:"수원월드컵경기장"},
+    {id:"r26", date:"2026-09-12", comp:"K리그2", round:"26R", home:false, opp:"서울 이랜드",     gf:1, ga:0, r:"W", ven:"목동종합운동장"},
+    {id:"r28", date:"2026-10-11", comp:"K리그2", round:"28R", home:true,  opp:"안산 그리너스",   gf:4, ga:1, r:"W", ven:"수원월드컵경기장"},
+    {id:"r29", date:"2026-10-18", comp:"K리그2", round:"29R", home:true,  opp:"화성 FC",         gf:3, ga:2, r:"W", ven:"수원월드컵경기장"},
+    {id:"r30", date:"2026-10-25", comp:"K리그2", round:"30R", home:false, opp:"성남 FC",         gf:2, ga:0, r:"W", ven:"탄천종합운동장"},
+    {id:"r31", date:"2026-10-31", comp:"K리그2", round:"31R", home:false, opp:"대구 FC",         gf:2, ga:2, r:"D", ven:"대구iM뱅크파크"},
+    {id:"r32", date:"2026-11-08", comp:"K리그2", round:"32R", home:true,  opp:"용인 FC",         gf:2, ga:0, r:"W", ven:"수원월드컵경기장"},
+    {id:"r33", date:"2026-11-21", comp:"K리그2", round:"33R", home:true,  opp:"경남 FC",         gf:3, ga:1, r:"W", ven:"수원월드컵경기장", extra:"우승 확정"},
+    {id:"r34", date:"2026-11-29", comp:"K리그2", round:"34R", home:false, opp:"전남 드래곤즈",   gf:null, ga:null, r:"S", ven:"순천팔마경기장", extra:"최종전"}
+  ];
+
+  var KEY = "suwon2026-attended-v1";
+  var SEED = ["r29"];            // 10/18 화성전 = 관람 확인된 경기
+  var DOW = ["일","월","화","수","목","금","토"];
+
+  /* ─── 저장소 ─────────────────────────── */
+  var storageOK = true;
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(raw === null) return SEED.slice();
+      var arr = JSON.parse(raw);
+      if(!Array.isArray(arr)) return SEED.slice();
+      return arr.filter(function(id){ return MATCHES.some(function(m){return m.id===id;}); });
+    }catch(e){ storageOK = false; return SEED.slice(); }
+  }
+  function save(set){
+    try{ localStorage.setItem(KEY, JSON.stringify(Array.from(set))); }
+    catch(e){ storageOK = false; }
+  }
+
+  var attended = {};
+  load().forEach(function(id){ attended[id] = true; });
+
+  var filter = "all";
+  var desc = true;
+
+  /* ─── 유틸 ───────────────────────────── */
+  function parts(d){ var p = d.split("-"); return [+p[0], +p[1], +p[2]]; }
+  function dow(d){ var p = parts(d); return DOW[new Date(p[0], p[1]-1, p[2]).getDay()]; }
+  function md(d){ var p = parts(d); return (p[1]<10?"0":"")+p[1] + "." + (p[2]<10?"0":"")+p[2]; }
+  function pct(part, total){ return total ? Math.round(part/total*100) : null; }
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+  function toast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function(){ t.classList.remove("show"); }, 1900);
+  }
+
+  /* ─── 통계 계산 ───────────────────────── */
+  function calc(){
+    var fin = [], sched = [];
+    MATCHES.forEach(function(m){
+      if(!attended[m.id]) return;
+      (m.r === "S" ? sched : fin).push(m);
+    });
+    fin.sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+
+    var w=0,d=0,l=0, hw=0,hd=0,hl=0, aw=0,ad=0,al=0;
+    fin.forEach(function(m){
+      if(m.r==="W") w++; else if(m.r==="D") d++; else l++;
+      if(m.home){ if(m.r==="W") hw++; else if(m.r==="D") hd++; else hl++; }
+      else      { if(m.r==="W") aw++; else if(m.r==="D") ad++; else al++; }
+    });
+
+    // 최다 연승 & 현재 흐름 (직관한 경기 시간순)
+    var best=0, cur=0, bestEnd=null;
+    fin.forEach(function(m,i){
+      if(m.r==="W"){ cur++; if(cur>best){ best=cur; bestEnd=i; } }
+      else cur = 0;
+    });
+    var tail=0;
+    for(var i=fin.length-1;i>=0;i--){ if(fin[i].r==="W") tail++; else break; }
+    var tailD=0;
+    for(var j=fin.length-1;j>=0;j--){ if(fin[j].r==="W"||fin[j].r==="D") tailD++; else break; }
+
+    return {
+      fin:fin, sched:sched, n:fin.length, w:w, d:d, l:l,
+      hN:hw+hd+hl, hW:hw, hD:hd, hL:hl,
+      aN:aw+ad+al, aW:aw, aD:ad, aL:al,
+      best:best, bestEnd:bestEnd, tail:tail, unbeaten:tailD
+    };
+  }
+
+  var TEAM_RATE = 67.7;   // 리그 21승 6무 4패 = 21/31
+
+  function comment(s){
+    if(!s.n){
+      return '<span class="big">직관 기록을 체크해 보세요</span>아래 경기 목록에서 내가 다녀온 경기의 ✓ 를 누르면 승률이 바로 계산됩니다.';
+    }
+    var rate = pct(s.w, s.n);
+    var diff = Math.round((rate - TEAM_RATE) * 10) / 10;
+    if(s.n < 2){
+      return '<span class="big">첫 직관 기록 등록 완료</span>경기를 더 체크할수록 승리 요정 지수가 정확해져요. 지금까지 ' + (s.w?s.w+"승":"") + (s.d?s.d+"무":"") + (s.l?s.l+"패":"") + ' (' + rate + '%).';
+    }
+    if(rate >= 80){
+      return '<span class="big">🧚 진짜 승리 요정 인증</span>직관 ' + s.n + '경기에서 승률 ' + rate + '%! 팀 리그 승률(' + TEAM_RATE + '%)보다 ' + (diff >= 0 ? "+" : "") + diff + '%p 높아요. 다음 홈경기도 꼭 가야겠는데요.';
+    }
+    if(rate >= TEAM_RATE){
+      return '<span class="big">승리 요정 기질 있음</span>직관 승률 ' + rate + '%는 팀 리그 승률(' + TEAM_RATE + '%)보다 ' + (diff >= 0 ? "+" : "") + diff + '%p 높은 수치예요. 직관 갈수록 이득입니다.';
+    }
+    if(rate >= 45){
+      return '<span class="big">평범한(?) 진성 서포터</span>직관 승률 ' + rate + '%로 팀 승률과 비슷한 흐름이에요. ' + (s.tail?'최근 직관 ' + s.tail + '연승 중이니 분위기 탔습니다!':'다음 경기에서 뒤집어 봅시다.');
+    }
+    return '<span class="big">직관 운이 조금 아쉬움</span>직관 승률 ' + rate + '% (' + s.n + '경기). 그래도 응원은 승률로 계산되지 않죠 — 다음 원정 같이 가 볼까요?';
+  }
+
+  /* ─── 렌더: 대시보드 ─────────────────── */
+  function renderStats(){
+    var s = calc();
+    var rate = pct(s.w, s.n);
+    var rateND = pct(s.w, s.w + s.l);
+
+    document.getElementById("ring").style.setProperty("--p", String(rate === null ? 0 : rate));
+    document.getElementById("rate").textContent = rate === null ? "–" : rate;
+
+    document.getElementById("record").innerHTML =
+      s.n + "전 <b>" + s.w + "승</b> " + s.d + "무 " + s.l + "패";
+    document.getElementById("rateNote").textContent = s.n
+      ? (s.sched.length ? "종료 경기 기준 · 예정 " + s.sched.length + "경기 별도" : "무승부 포함 · 승 ÷ 직관 경기")
+      : "직관한 경기가 아직 없어요";
+
+    document.getElementById("rateND").textContent = rateND === null ? "–" : rateND + "%";
+
+    var diffEl = document.getElementById("diffPill");
+    if(rate === null){ diffEl.style.display = "none"; }
+    else {
+      var diff = Math.round((rate - TEAM_RATE) * 10) / 10;
+      diffEl.style.display = "";
+      document.getElementById("diff").textContent = (diff > 0 ? "+" : "") + diff + "%p";
+      diffEl.className = "pill" + (diff >= 0 ? "" : " red");
+    }
+
+    // 홈
+    var hRate = pct(s.hW, s.hN), aRate = pct(s.aW, s.aN);
+    document.getElementById("homeRate").textContent = hRate === null ? "–" : hRate;
+    document.getElementById("awayRate").textContent = aRate === null ? "–" : aRate;
+    document.getElementById("homeRec").textContent = s.hN ? s.hN+"전 "+s.hW+"승 "+s.hD+"무 "+s.hL+"패" : "아직 없음";
+    document.getElementById("awayRec").textContent = s.aN ? s.aN+"전 "+s.aW+"승 "+s.aD+"무 "+s.aL+"패" : "아직 없음";
+    document.getElementById("homeBar").style.width = (hRate || 0) + "%";
+    document.getElementById("awayBar").style.width = (aRate || 0) + "%";
+
+    // 횟수
+    document.getElementById("attCnt").textContent = s.n;
+    document.getElementById("attSub").textContent = "종료 32경기 중 " + s.n + "경기 (" + (pct(s.n,32) || 0) + "%)"
+      + (s.sched.length ? " · 예정 " + s.sched.length + "경기" : "");
+
+    // 연승
+    var st = document.getElementById("streak");
+    st.innerHTML = s.best ? s.best + "<i>연승</i>" : "–";
+    document.getElementById("streakSub").textContent = s.n
+      ? (s.tail >= 2 ? "현재 " + s.tail + "연승 중 🔥" : s.unbeaten >= 2 ? "현재 " + s.unbeaten + "경기 무패" : "연승 기록 없음")
+      : "직관 기록 없음";
+
+    document.getElementById("comment").innerHTML = comment(s);
+  }
+
+  /* ─── 렌더: 목록 ─────────────────────── */
+  function visible(){
+    var arr = MATCHES.filter(function(m){
+      if(filter === "home") return m.home;
+      if(filter === "away") return !m.home;
+      if(filter === "att") return !!attended[m.id];
+      if(filter === "upcoming") return m.r === "S";
+      return true;
+    });
+    arr.sort(function(a,b){
+      if(a.date === b.date) return 0;
+      return desc ? (a.date < b.date ? 1 : -1) : (a.date < b.date ? -1 : 1);
+    });
+    return arr;
+  }
+
+  function renderList(){
+    var list = document.getElementById("matchList");
+    var arr = visible();
+    document.getElementById("listCnt").textContent = arr.length + "경기";
+
+    if(!arr.length){
+      list.innerHTML = '<li class="empty">' + (filter === "att"
+        ? "아직 직관 체크한 경기가 없어요.<br>다녀온 경기의 ✓ 를 눌러 보세요!"
+        : "해당하는 경기가 없어요.") + "</li>";
+      return;
+    }
+
+    var html = "";
+    arr.forEach(function(m){
+      var on = !!attended[m.id];
+      var resTxt = {W:"승", D:"무", L:"패", S:"예정"}[m.r];
+      var score = m.r === "S" ? '<span class="s"><dim>– : –</dim></span>'
+                              : '<span class="s">' + m.gf + "-" + m.ga + "</span>";
+      html += '<li class="match' + (on ? " on" : "") + (m.r === "S" ? " up" : "") + '">' +
+        '<div class="m-date"><div class="d">' + md(m.date) + '</div><div class="w">' + dow(m.date) + '요일</div></div>' +
+        '<div class="m-body">' +
+          '<div class="m-top">' +
+            '<span class="tag ' + (m.home ? "home" : "away") + '">' + (m.home ? "홈" : "원정") + '</span>' +
+            (m.comp === "코리아컵" ? '<span class="tag cup">코리아컵</span>' : "") +
+            '<span class="tag round">' + esc(m.comp) + " " + m.round + (m.extra ? " · " + esc(m.extra) : "") + '</span>' +
+          '</div>' +
+          '<div class="m-opp">vs ' + esc(m.opp) + '</div>' +
+          '<div class="m-ven">' + esc(m.ven) + '</div>' +
+        '</div>' +
+        '<div class="m-score">' + score + '<div><span class="res ' + m.r + '">' + resTxt + '</span></div></div>' +
+        '<button type="button" class="toggle" data-id="' + m.id + '" aria-pressed="' + on + '" ' +
+          'aria-label="' + esc(md(m.date) + " " + m.opp + " 직관 체크") + '"></button>' +
+      '</li>';
+    });
+    list.innerHTML = html;
+  }
+
+  function renderAll(){ renderStats(); renderList(); }
+
+  /* ─── 이벤트 ─────────────────────────── */
+  document.getElementById("matchList").addEventListener("click", function(e){
+    var btn = e.target.closest ? e.target.closest(".toggle") : null;
+    if(!btn) return;
+    var id = btn.getAttribute("data-id");
+    if(attended[id]) delete attended[id]; else attended[id] = true;
+    save(new Set(Object.keys(attended).filter(function(k){ return attended[k]; })));
+    renderAll();
+  });
+
+  document.getElementById("filters").addEventListener("click", function(e){
+    var b = e.target.closest ? e.target.closest("button[data-f]") : null;
+    if(!b) return;
+    filter = b.getAttribute("data-f");
+    Array.prototype.forEach.call(document.querySelectorAll("#filters button"), function(x){
+      x.setAttribute("aria-pressed", String(x === b));
+    });
+    renderList();
+  });
+
+  document.getElementById("sortBtn").addEventListener("click", function(){
+    desc = !desc;
+    this.textContent = desc ? "최신순 ↓" : "과거순 ↑";
+    renderList();
+  });
+
+  document.getElementById("shareBtn").addEventListener("click", function(){
+    var s = calc();
+    var lines = ["⚽ 2026 수원삼성 직관 기록"];
+    if(s.n){
+      lines.push("· 직관 " + s.n + "전 " + s.w + "승 " + s.d + "무 " + s.l + "패 · 승률 " + pct(s.w, s.n) + "%");
+      if(s.hN) lines.push("· 홈 " + s.hN + "전 " + s.hW + "승 " + s.hD + "무 " + s.hL + "패");
+      if(s.aN) lines.push("· 원정 " + s.aN + "전 " + s.aW + "승 " + s.aD + "무 " + s.aL + "패");
+      if(s.best) lines.push("· 최다 " + s.best + "연승" + (s.tail >= 2 ? " (현재 " + s.tail + "연승)" : ""));
+      lines.push("");
+      s.fin.forEach(function(m){
+        lines.push("[" + {W:"승",D:"무",L:"패"}[m.r] + "] " + md(m.date) + " " + (m.home?"홈":"원정") + " " +
+          m.opp + " " + m.gf + "-" + m.ga);
+      });
+      if(s.sched.length) lines.push("\n(예정: " + s.sched.map(function(m){return md(m.date)+" "+m.opp;}).join(", ") + ")");
+    } else {
+      lines.push("· 아직 직관 기록 없음 — 수원삼성 화이팅!");
+    }
+    var text = lines.join("\n");
+
+    function fallback(){
+      var ta = document.createElement("textarea");
+      ta.value = text; ta.setAttribute("readonly","");
+      ta.style.position = "fixed"; ta.style.top = "-1000px";
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try{ ok = document.execCommand("copy"); }catch(e){}
+      document.body.removeChild(ta);
+      toast(ok ? "직관 기록을 복사했어요" : "복사가 안 돼요. 길게 눌러 복사해 주세요");
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ toast("직관 기록을 복사했어요"); }, fallback);
+    } else fallback();
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", function(){
+    if(!Object.keys(attended).length){ toast("이미 비어 있어요"); return; }
+    if(!confirm("직관 체크를 모두 지울까요? 되돌릴 수 없어요.")) return;
+    attended = {};
+    save(new Set());
+    renderAll();
+    toast("직관 기록을 초기화했어요");
+  });
+
+  /* D-day */
+  (function(){
+    var nov = parts("2026-11-29");
+    var target = new Date(nov[0], nov[1]-1, nov[2]);
+    var now = new Date();
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var days = Math.round((target - today) / 86400000);
+    var el = document.getElementById("dday");
+    if(days > 0) el.textContent = "D-" + days;
+    else if(days === 0) el.textContent = "오늘 경기!";
+    else el.textContent = "시즌 종료";
+    document.getElementById("asOf").textContent = "기준 2026.11.23";
+  })();
+
+  if(!storageOK){
+    var n = document.createElement("div");
+    n.className = "empty";
+    n.style.color = "#b42318";
+    n.textContent = "이 브라우저에서는 저장이 막혀 있어 새로고침하면 체크가 사라져요. (Safari 시크릿 모드 등)";
+    document.querySelector("main.wrap").appendChild(n);
+  }
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
