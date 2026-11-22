@@ -275,13 +275,13 @@
     <div class="split">
       <div class="mini">
         <div class="lbl">🏟 홈 직관</div>
-        <div class="val"><span id="homeRate">–</span><i>%</i></div>
+        <div class="val" id="homeRate">–</div>
         <div class="rec" id="homeRec">0전 0승 0무 0패</div>
         <div class="bar"><i id="homeBar" style="width:0%"></i></div>
       </div>
       <div class="mini away">
         <div class="lbl">🚌 원정 직관</div>
-        <div class="val"><span id="awayRate">–</span><i>%</i></div>
+        <div class="val" id="awayRate">–</div>
         <div class="rec" id="awayRec">0전 0승 0무 0패</div>
         <div class="bar"><i id="awayBar" style="width:0%"></i></div>
       </div>
@@ -488,7 +488,7 @@
       return '<span class="big">첫 직관 기록 등록 완료</span>경기를 더 체크할수록 승리 요정 지수가 정확해져요. 지금까지 ' + (s.w?s.w+"승":"") + (s.d?s.d+"무":"") + (s.l?s.l+"패":"") + ' (' + rate + '%).';
     }
     if(rate >= 80){
-      return '<span class="big">🧚 진짜 승리 요정 인증</span>직관 ' + s.n + '경기에서 승률 ' + rate + '%! 팀 리그 승률(' + TEAM_RATE + '%)보다 ' + (diff >= 0 ? "+" : "") + diff + '%p 높아요. 다음 홈경기도 꼭 가야겠는데요.';
+      return '<span class="big">🧚 진짜 승리 요정 인증</span>직관 ' + s.n + '경기에서 승률 ' + rate + '%! 팀 리그 승률(' + TEAM_RATE + '%)보다 ' + (diff >= 0 ? "+" : "") + diff + '%p 높아요. 다음 경기도 꼭 가야겠네요.';
     }
     if(rate >= TEAM_RATE){
       return '<span class="big">승리 요정 기질 있음</span>직관 승률 ' + rate + '%는 팀 리그 승률(' + TEAM_RATE + '%)보다 ' + (diff >= 0 ? "+" : "") + diff + '%p 높은 수치예요. 직관 갈수록 이득입니다.';
@@ -527,8 +527,8 @@
 
     // 홈
     var hRate = pct(s.hW, s.hN), aRate = pct(s.aW, s.aN);
-    document.getElementById("homeRate").textContent = hRate === null ? "–" : hRate;
-    document.getElementById("awayRate").textContent = aRate === null ? "–" : aRate;
+    document.getElementById("homeRate").innerHTML = hRate === null ? "–" : hRate + "<i>%</i>";
+    document.getElementById("awayRate").innerHTML = aRate === null ? "–" : aRate + "<i>%</i>";
     document.getElementById("homeRec").textContent = s.hN ? s.hN+"전 "+s.hW+"승 "+s.hD+"무 "+s.hL+"패" : "아직 없음";
     document.getElementById("awayRec").textContent = s.aN ? s.aN+"전 "+s.aW+"승 "+s.aD+"무 "+s.aL+"패" : "아직 없음";
     document.getElementById("homeBar").style.width = (hRate || 0) + "%";
@@ -541,9 +541,9 @@
 
     // 연승
     var st = document.getElementById("streak");
-    st.innerHTML = s.best ? s.best + "<i>연승</i>" : "–";
+    st.innerHTML = s.best >= 2 ? s.best + "<i>연승</i>" : "–";
     document.getElementById("streakSub").textContent = s.n
-      ? (s.tail >= 2 ? "현재 " + s.tail + "연승 중 🔥" : s.unbeaten >= 2 ? "현재 " + s.unbeaten + "경기 무패" : "연승 기록 없음")
+      ? (s.tail >= 2 ? "현재 " + s.tail + "연승 중 🔥" : s.unbeaten >= 2 ? "현재 " + s.unbeaten + "경기 무패" : "연속 기록 없음")
       : "직관 기록 없음";
 
     document.getElementById("comment").innerHTML = comment(s);
