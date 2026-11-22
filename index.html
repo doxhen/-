@@ -236,7 +236,7 @@ main{min-height:70vh;padding-bottom:70px}
 .sel{min-width:130px}
 .ta{resize:vertical;min-height:220px;line-height:1.7}
 .write-foot{display:flex;justify-content:flex-end;gap:8px;padding:0 22px 22px}
-.form-error{margin:0;color:var(--red);font-size:12px;font-weight:600;min-height:16px}
+.form-error{margin:0;color:var(--red);font-size:12px;font-weight:600;min-height:16px;line-height:1.6;white-space:pre-line}
 .field-hint{font-size:11.5px;color:#a2a9b8}
 
 /* ---------- 모달 ---------- */
@@ -784,6 +784,42 @@ main{min-height:70vh;padding-bottom:70px}
     }
   }
 
+  /* ---------- 인증 관련 공통 ---------- */
+  /* 인증 메일의 링크가 돌아올 주소. Supabase 대시보드 Auth > URL Configuration 의
+     Site URL / Redirect URLs 에 등록된 주소여야 링크가 열린다. */
+  function authRedirectUrl() {
+    return location.origin + location.pathname;
+  }
+
+  /* Supabase Auth 오류를 화면에 보여줄 한국어 문구로 바꾼다. */
+  function authErrorMessage(error, stage) {
+    var code = String((error && (error.code || error.error_code)) || '');
+    var msg = String((error && error.message) || '');
+    var all = (code + ' ' + msg).toLowerCase();
+    if (all.indexOf('email not confirmed') !== -1 || all.indexOf('email_not_confirmed') !== -1) {
+      return '아직 이메일 인증이 끝나지 않았어요. 가입할 때 받은 메일의 인증 링크를 먼저 눌러 주세요.\n메일이 안 보이면 스팸함도 확인해 주세요.';
+    }
+    if (all.indexOf('invalid login credentials') !== -1) {
+      return '이메일 또는 비밀번호가 맞지 않습니다.';
+    }
+    if (all.indexOf('rate limit') !== -1 || all.indexOf('over_email_send_rate_limit') !== -1 || all.indexOf('too many') !== -1) {
+      return '인증 메일 발송이 잠시 제한됐어요. 무료 플랜은 시간당 발송 한도가 있어서 1시간쯤 뒤에 다시 시도하면 됩니다.';
+    }
+    if (all.indexOf('signup is disabled') !== -1 || all.indexOf('signups not allowed') !== -1) {
+      return '지금은 새 회원가입을 받지 않고 있어요.';
+    }
+    if (all.indexOf('unable to validate email') !== -1 || all.indexOf('invalid email') !== -1) {
+      return '이메일 주소 형식이 올바르지 않습니다.';
+    }
+    if (all.indexOf('user already registered') !== -1) {
+      return '이미 가입된 이메일입니다. 로그인해 주세요.';
+    }
+    if (stage === 'signup' && (all.indexOf('password') !== -1 && all.indexOf('characters') !== -1)) {
+      return '비밀번호는 6자 이상으로 입력해 주세요.';
+    }
+    return msg || '요청을 처리하지 못했어요. 잠시 뒤에 다시 시도해 주세요.';
+  }
+
   /* -------------------------------------------------------------------------
      SupabaseStore — LocalStore와 동일한 인터페이스
      사용법:
@@ -918,15 +954,41 @@ main{min-height:70vh;padding-bottom:70px}
       const post = await this.getPost(postId);
       return { recommend: post.recommend, dislike: post.dislike, myVote: post.myVote };
     }
+    /* 이메일 인증(Confirm email)이 켜져 있으면 signUp 응답은 user 는 있고 session 은 null 이다.
+       이때 에러로 처리하지 않고 needsConfirm: true 로 돌려줘 화면에서 안내하게 한다. */
     async signUp(input) {
+      const username = String(input.username || '').trim();
+      const nickname = String(input.nickname || '').trim();
+      const email = String(input.email || '').trim();
+      const password = String(input.password || '');
+
+      if (!validId(username)) throw new Error('아이디는 영문·숫자·밑줄 4~16자로 입력해 주세요.');
+      if (nickname.length < 2 || nickname.length > 12) throw new Error('닉네임은 2~12자로 입력해 주세요.');
+      if (!validEmail(email)) throw new Error('이메일 형식이 올바르지 않습니다.');
+      if (password.length < 6) throw new Error('비밀번호는 6자 이상이어야 합니다.');
+
       const { data, error } = await this.sb.auth.signUp({
-        email: input.email,
-        password: input.password,
-        options: { data: { username: input.username, nickname: input.nickname } }
+        email: email,
+        password: password,
+        options: {
+          emailRedirectTo: authRedirectUrl(),
+          data: { username: username, nickname: nickname }
+        }
       });
-      if (error) throw new Error(error.message);
-      if (!data.session) throw new Error('가입 확인 메일을 확인한 뒤 로그인해 주세요.');
-      return { user: await this.me(), isFirstAdmin: false };
+      if (error) throw new Error(authErrorMessage(error, 'signup'));
+      this._me = null;
+      /* 이미 가입된 이메일이면 Supabase 는(계정 존재 여부를 숨기려고) identities 가 빈
+         가짜 user 를 돌려주고 메일도 보내지 않는다. */
+      if (data && data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        throw new Error('이미 가입된 이메일입니다. 인증을 마치지 않은 계정이라면 인증 메일이 다시 발송됐을 수 있으니 메일함을 확인해 주세요. 이미 가입을 마쳤다면 로그인해 주세요.');
+      }
+      return {
+        user: data && data.session ? await this.me() : null,
+        isFirstAdmin: false,
+        needsConfirm: !(data && data.session),
+        email: email,
+        nickname: nickname
+      };
     }
     /* Supabase Auth는 이메일 로그인이 기본입니다. 아이디 로그인이 필요하면
        username → email 을 돌려주는 RPC를 만들고 여기서 먼저 조회하세요. */
@@ -934,7 +996,7 @@ main{min-height:70vh;padding-bottom:70px}
       const key = String(input.username || '').trim();
       if (key.indexOf('@') === -1) throw new Error('서버 연동 모드에서는 이메일로 로그인합니다. (아이디 로그인은 RPC 추가 필요)');
       const { error } = await this.sb.auth.signInWithPassword({ email: key, password: input.password });
-      if (error) throw new Error('이메일 또는 비밀번호가 맞지 않습니다.');
+      if (error) throw new Error(authErrorMessage(error, 'signin'));
       return this.me();
     }
     async signOut() { await this.sb.auth.signOut(); this._me = null; }
@@ -1599,7 +1661,7 @@ main{min-height:70vh;padding-bottom:70px}
         '<input class="inp" id="suPw2" name="password2" type="password" autocomplete="new-password" placeholder="한 번 더 입력"></div>' +
       '<p class="form-error" data-error></p>' +
       '<button class="btn primary auth-submit" type="submit">가입하고 시작하기</button>' +
-      '<div class="auth-note">데모라서 실제 메일 발송·본인인증은 없습니다. 계정은 이 브라우저에만 저장돼요.</div>' +
+      '<div class="auth-note">가입하면 입력하신 이메일로 <b>인증 메일</b>이 발송됩니다.<br>메일의 링크를 눌러 인증을 마쳐야 가입이 완료돼요.</div>' +
     '</form>';
   }
 
@@ -1653,6 +1715,22 @@ main{min-height:70vh;padding-bottom:70px}
   function setFormError(form, msg) {
     const p = form.querySelector('[data-error]') || form.querySelector('.form-error');
     if (p) p.textContent = msg || '';
+  }
+
+  /* 안내 전용 모달(버튼 하나) */
+  function openNotice(title, message) {
+    $('#modalRoot').innerHTML =
+      '<div class="backdrop" data-action="modal-bg">' +
+        '<div class="modal confirm-modal" role="dialog" aria-modal="true" aria-label="안내">' +
+          '<div class="confirm-body">' +
+            '<p class="confirm-title">' + esc(title || '안내') + '</p>' +
+            '<p class="confirm-text">' + esc(message || '') + '</p>' +
+          '</div>' +
+          '<div class="confirm-foot">' +
+            '<button class="btn primary" type="button" data-action="modal-close">확인</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
   }
 
   /* ========================= 8. 이벤트 ========================= */
@@ -1845,6 +1923,14 @@ main{min-height:70vh;padding-bottom:70px}
           password: form.password.value
         });
         closeModal();
+        if (res.needsConfirm) {
+          openNotice('메일함을 확인해 주세요',
+            '입력하신 이메일(' + res.email + ')로 인증 메일을 보냈습니다.\n\n' +
+            '메일함의 인증 링크를 누르면 가입이 완료되고 바로 로그인됩니다.\n' +
+            '메일이 안 보이면 스팸함도 확인해 주세요. (도착까지 1분 정도 걸릴 수 있어요)');
+          await render(true);
+          return;
+        }
         toast(res.isFirstAdmin ? '가입 완료! 첫 계정이라 관리자 권한이 생겼습니다.' : '가입 완료! 환영합니다.');
         await render(true);
         if (afterAuth) { const fn = afterAuth; afterAuth = null; fn(); }
@@ -1908,8 +1994,45 @@ main{min-height:70vh;padding-bottom:70px}
   /* ========================= 9. 시작 ========================= */
   window.addEventListener('hashchange', function () { render(false); });
 
+  /* 인증 메일 링크로 돌아온 경우 처리
+     성공: #access_token=...&type=signup / 실패: #error_description=... */
+  async function handleAuthRedirect() {
+    const raw = location.hash || '';
+    if (!raw || raw.indexOf('#/') === 0) return false;
+    const params = new URLSearchParams(raw.replace(/^#/, ''));
+    const errDesc = params.get('error_description') || params.get('error_code') || params.get('error') || '';
+    const hasToken = !!params.get('access_token') || params.get('type') === 'signup' || params.get('type') === 'email';
+    if (!errDesc && !hasToken) return false;
+
+    /* supabase-js 가 URL 의 토큰을 읽어 세션을 만들 때까지 기다린다 (getSession 은 초기화를 기다림) */
+    if (api.sb && api.sb.auth) {
+      try { await api.sb.auth.getSession(); } catch (e) { /* 무시: 아래에서 결과로 판단 */ }
+    }
+
+    let title, message;
+    if (errDesc) {
+      const d = decodeURIComponent(String(errDesc).replace(/\+/g, ' '));
+      title = '인증 링크를 확인해 주세요';
+      message = /expired|invalid|already/i.test(d)
+        ? '인증 링크가 만료됐거나 이미 사용됐어요.\n로그인 화면에서 같은 이메일·비밀번호로 다시 회원가입하면 인증 메일을 새로 받을 수 있습니다.'
+        : '인증 링크를 처리하지 못했어요. 잠시 뒤 다시 시도해 주세요.';
+    } else {
+      const me = await api.me();
+      title = '이메일 인증 완료';
+      message = me
+        ? me.nickname + '님, 이메일 인증이 완료됐습니다! 이제 글·댓글·개추를 쓸 수 있어요.'
+        : '이메일 인증이 완료됐습니다. 이제 로그인할 수 있어요.';
+    }
+
+    history.replaceState(null, '', location.pathname + location.search + '#/g/free');
+    await render(false);
+    openNotice(title, message);
+    return true;
+  }
+
   (async function boot() {
     await api.init();
+    if (await handleAuthRedirect()) return;
     if (!location.hash) location.hash = '#/g/free';
     await render(false);
   })();
