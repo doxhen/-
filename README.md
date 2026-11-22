@@ -5,7 +5,9 @@
 - 사이트: https://doxhen.github.io/-/ (GitHub Pages, `main` 브랜치 루트)
 - 저장소: https://github.com/doxhen/-
 - DB/인증: Supabase 프로젝트 `dohoon-gallery` (리전 ap-northeast-2) — `CONFIG.backend = 'supabase'` 로 연동됨
-- 회원가입은 이메일 인증 없이 즉시 가입·로그인됩니다.
+- **회원가입은 이메일 인증 방식**입니다. 가입 시 메일로 온 인증 링크를 눌러야 가입이 완료되고, 링크를 누르면 사이트로 돌아와 바로 로그인됩니다.
+  - Supabase 무료 기본 메일러는 **시간당 2통**까지만 발송됩니다(대시보드 Auth → Rate Limits). 인증 메일이 안 오면 스팸함을 확인하고, 한도를 넘었다면 1시간 뒤 다시 시도해야 합니다.
+  - 인증 메일의 기본 문구는 영어입니다. 바꾸려면 Supabase 대시보드 Auth → Emails → Confirm signup 템플릿을 수정하거나 커스텀 SMTP를 연결하세요.
 
 단일 HTML 파일(`index.html`)로 동작하는 커뮤니티 데모입니다. 서버 없이 브라우저에서 바로 열 수 있고,
 데이터는 `localStorage`에만 저장됩니다. 같은 화면 코드 그대로 Supabase로 옮길 수 있게 데이터 레이어를 분리해 두었습니다.
@@ -43,7 +45,7 @@
 ## Supabase로 옮기기
 
 1. Supabase 프로젝트를 만들고 `supabase-schema.sql` 전체를 SQL Editor에서 실행합니다.
-2. Authentication → Providers → Email 을 켭니다. (테스트라면 "Confirm email"을 꺼 두면 가입 즉시 로그인)
+2. Authentication → Providers → Email 을 켭니다. **"Confirm email"을 켜면** 가입 시 인증 메일을 보내고 링크를 눌러야 가입이 완료됩니다(권장). 꺼 두면 가입 즉시 로그인됩니다.
 3. `index.html`의 `</body>` 앞에 supabase-js를 추가합니다.
    ```html
    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
