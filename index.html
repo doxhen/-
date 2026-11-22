@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="디시인사이드 스타일의 회원제 커뮤니티 데모. 갤러리, 개념글, 댓글·대댓글, 개추/비추를 지원합니다.">
+<title>도훈갤 · 디시 스타일 커뮤니티</title>
+<style>
+/* =========================================================
+   도훈갤 — DCInside 스타일 커뮤니티 (단일 HTML 파일)
+   ========================================================= */
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --navy:#29367c;
+  --navy-2:#3b4890;
+  --navy-3:#1f2a63;
+  --ink:#2f3542;
+  --line:#e3e6ee;
+  --line-soft:#f1f3f8;
+  --muted:#8b93a5;
+  --red:#e04a4a;
+  --gold:#ffd76a;
+  --maxw:1040px;
+  --radius:10px;
+}
+html,body{margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:#f1f2f6;
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Segoe UI",Roboto,sans-serif;
+  font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;font-size:inherit}
+img{max-width:100%}
+.skip{position:absolute;left:-9999px}
+.skip:focus{left:8px;top:8px;background:#fff;padding:8px;z-index:999}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 16px}
+
+/* ---------- 상단 유틸 바 ---------- */
+.topbar{background:var(--navy-3);color:#c9d1ef;font-size:11.5px}
+.topbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;height:32px}
+.topbar-note{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.account{display:flex;align-items:center;gap:7px;flex:none}
+.account .who{color:#dfe5ff;white-space:nowrap}
+.account .who b{color:#fff;font-weight:700}
+.account button{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.20);color:#e8ecff;
+  padding:3px 9px;border-radius:5px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+.account button:hover{background:rgba(255,255,255,.18)}
+.account button.accent{background:var(--gold);border-color:var(--gold);color:#3a2f00;font-weight:800}
+.admin-tag{display:inline-block;background:var(--gold);color:#3a2f00;font-size:9.5px;font-weight:800;
+  padding:1px 5px;border-radius:4px;margin-left:4px;vertical-align:middle;line-height:1.4}
+
+/* ---------- 헤더 ---------- */
+.site-header{
+  background:
+    radial-gradient(1200px 200px at 10% -40%, rgba(255,255,255,.14), transparent 70%),
+    linear-gradient(135deg,#3b4890 0%,#29367c 55%,#232f6e 100%);
+  color:#fff;
+  border-bottom:1px solid rgba(0,0,0,.15);
+}
+.header-inner{display:flex;align-items:center;gap:18px;padding:14px 16px;max-width:var(--maxw);margin:0 auto}
+.logo{display:flex;align-items:center;gap:10px;flex:none}
+.logo-mark{width:38px;height:38px;border-radius:10px;background:#fff;color:var(--navy);
+  display:grid;place-items:center;font-size:19px;font-weight:900;letter-spacing:-1px;
+  box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.logo-text{display:flex;flex-direction:column;line-height:1.1}
+.logo-title{font-size:20px;font-weight:800;letter-spacing:-.5px}
+.logo-sub{font-size:9.5px;letter-spacing:1.6px;color:#b9c4ea;margin-top:3px}
+.hsearch{flex:1;max-width:400px;margin-left:auto;display:flex;align-items:center;
+  background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.30);border-radius:8px;overflow:hidden}
+.hsearch input{flex:1;min-width:0;background:transparent;border:0;outline:none;color:#fff;
+  padding:9px 12px;font-size:13px;font-family:inherit}
+.hsearch input::placeholder{color:#c3ccef}
+.hsearch button{background:rgba(255,255,255,.92);color:var(--navy);border:0;padding:0 14px;
+  height:36px;font-weight:800;cursor:pointer;font-size:13px}
+.hsearch button:hover{background:#fff}
+
+/* ---------- 갤러리 탭 ---------- */
+.gallery-nav{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;
+  box-shadow:0 1px 2px rgba(20,26,60,.04)}
+.gallery-nav .wrap{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.gallery-nav .wrap::-webkit-scrollbar{display:none}
+.gnav{flex:none;padding:12px 15px;font-size:13.5px;font-weight:600;color:#5b6478;
+  border-bottom:2px solid transparent;white-space:nowrap;transition:.12s}
+.gnav .ico{margin-right:3px}
+.gnav:hover{color:var(--navy);background:#f7f8fc}
+.gnav.on{color:var(--navy);border-bottom-color:var(--navy);background:#f6f7fc}
+
+/* ---------- 공통 ---------- */
+main{min-height:70vh;padding-bottom:70px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid #d5d9e4;
+  background:#fff;color:#3c4457;padding:8px 14px;border-radius:7px;font-size:13px;font-weight:600;
+  cursor:pointer;transition:.14s;line-height:1.2}
+.btn:hover{border-color:#b9c0d4;background:#f7f8fc}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.primary:hover{background:#22306f;border-color:#22306f}
+.btn.sm{padding:6px 10px;font-size:12px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:#f1f3f8;color:#4a5265}
+.btn.danger{color:var(--red);border-color:#f1d3d3}
+.btn.danger:hover{background:#fff5f5;border-color:#e8b9b9}
+.btn:disabled{opacity:.55;cursor:default}
+
+/* ---------- 게시판 머리 ---------- */
+.board-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;padding:24px 0 6px;flex-wrap:wrap}
+.board-title{font-size:22px;font-weight:800;letter-spacing:-.4px;display:flex;align-items:center;gap:8px}
+.board-title .dot{width:8px;height:8px;border-radius:50%;background:var(--navy);display:inline-block}
+.board-desc{font-size:12.5px;color:var(--muted);margin-top:5px}
+.board-actions{display:flex;gap:8px;align-items:center}
+
+.notice{margin-top:14px;background:#fff;border:1px solid var(--line);border-left:3px solid var(--navy-2);
+  border-radius:8px;padding:10px 14px;font-size:12.5px;color:#5b6478;display:flex;gap:8px;align-items:flex-start}
+.notice b{color:var(--navy);font-weight:700;white-space:nowrap}
+
+/* ---------- 필터·검색 ---------- */
+.toolbar{display:flex;align-items:center;gap:10px;margin:14px 0 10px;flex-wrap:wrap}
+.seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:8px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 13px;border-radius:6px;font-size:12.5px;
+  font-weight:700;color:#6b7387;cursor:pointer;transition:.12s}
+.seg button:hover{color:var(--navy)}
+.seg button.on{background:var(--navy);color:#fff}
+.seg-note{font-size:11.5px;color:#9aa1b2}
+.searchbar{margin-left:auto;display:flex;border:1px solid var(--line);background:#fff;border-radius:8px;overflow:hidden;height:38px}
+.searchbar select{border:0;border-right:1px solid var(--line);background:#f8f9fc;font-size:12.5px;
+  color:#5b6478;padding:0 8px;font-family:inherit;outline:none}
+.searchbar input{border:0;outline:0;padding:0 11px;width:190px;font-size:13px;font-family:inherit;color:var(--ink)}
+.searchbar button{border:0;background:var(--navy);color:#fff;padding:0 16px;font-weight:800;font-size:12.5px;cursor:pointer}
+.searchbar button:hover{background:#22306f}
+
+/* ---------- 게시글 목록 ---------- */
+.post-table{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.post-head,.post-row{display:grid;
+  grid-template-columns:56px 74px minmax(0,1fr) 104px 74px 52px 48px;
+  align-items:center;gap:8px;padding:0 14px}
+.post-head{height:38px;background:#f7f8fb;border-bottom:1px solid var(--line);
+  font-size:11.5px;color:#7b8497;font-weight:700;letter-spacing:.2px}
+.post-head > *{text-align:center}
+.post-head .ph-title{text-align:left;padding-left:2px}
+.post-row{min-height:45px;border-bottom:1px solid var(--line-soft);font-size:13.5px;transition:background .1s;cursor:pointer}
+.post-row:last-child{border-bottom:0}
+.post-row:hover{background:#f7f9ff}
+.post-row.concept{background:linear-gradient(90deg,#f8f9ff 0%,#fff 55%)}
+.post-row:hover.concept{background:#f4f6ff}
+.c-no,.c-views,.c-votes{text-align:center;font-size:12px;color:#98a0b2;font-variant-numeric:tabular-nums}
+.c-head{text-align:center}
+.head-tag{display:inline-block;font-size:11.5px;font-weight:600;color:#7b8497;white-space:nowrap}
+.head-tag[data-h="질문"]{color:#3b6fd4}
+.head-tag[data-h="정보"]{color:#2f9e6f}
+.head-tag[data-h="뉴스"]{color:#d0603a}
+.head-tag[data-h="후기"]{color:#8a5bc4}
+.c-title{display:flex;align-items:center;gap:6px;min-width:0;text-align:left}
+.c-title .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px;color:#333a4b}
+.post-row.concept .c-title .t{font-weight:700;color:#252c3f}
+.c-title .t:hover{text-decoration:underline}
+.cmt{color:var(--red);font-size:11.5px;font-weight:800;flex:none}
+.new{background:#ffe6e6;color:var(--red);font-size:9px;font-weight:900;padding:1px 3px;border-radius:3px;
+  line-height:1.3;flex:none;letter-spacing:.3px}
+.badge-concept{background:#eef2ff;color:#3b4890;border:1px solid #d6def8;font-size:9.5px;font-weight:900;
+  padding:1px 5px;border-radius:4px;flex:none;line-height:1.5}
+.c-author{font-size:12.5px;color:#4a5265;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.c-author .admin-tag{font-size:9px;padding:0 4px;margin-left:2px}
+.c-date{font-size:11.5px;color:#98a0b2;text-align:center;font-variant-numeric:tabular-nums}
+.c-votes .up{color:#c9a0a0;margin-right:1px}
+.empty{padding:56px 20px;text-align:center;color:#9aa1b2;font-size:13px}
+.empty .big{font-size:30px;display:block;margin-bottom:10px;opacity:.55}
+.empty .btn{margin-top:14px}
+.list-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:12px;color:#9aa1b2}
+
+/* ---------- 글 상세 ---------- */
+.post{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:18px}
+.crumb{font-size:12px;color:#98a0b2;padding:14px 2px 0}
+.crumb a:hover{color:var(--navy);text-decoration:underline}
+.post-top{padding:18px 22px 14px;border-bottom:1px solid var(--line-soft)}
+.post-headline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.post-title{font-size:20px;font-weight:800;letter-spacing:-.4px;line-height:1.4;word-break:break-word}
+.post-sub{margin-top:9px;display:flex;gap:9px;font-size:12.5px;color:var(--muted);flex-wrap:wrap;align-items:center}
+.post-sub .nick{color:#3c4457;font-weight:700}
+.post-sub .sep{color:#dfe3ec}
+.post-body{padding:24px 22px 30px;font-size:15px;line-height:1.8;white-space:pre-wrap;
+  word-break:break-word;min-height:70px;color:#333a4b}
+.votebar{display:flex;justify-content:center;gap:10px;padding:2px 20px 26px;flex-wrap:wrap}
+.vbtn{display:flex;align-items:center;gap:8px;border:1px solid #dfe3ec;background:#fff;border-radius:10px;
+  padding:10px 20px;font-size:13.5px;font-weight:800;color:#4a5265;cursor:pointer;transition:.14s}
+.vbtn .n{font-size:14.5px;font-variant-numeric:tabular-nums}
+.vbtn.up:hover{border-color:#e04a4a;color:#e04a4a;background:#fff7f7}
+.vbtn.up.on{background:var(--red);border-color:var(--red);color:#fff}
+.vbtn.down:hover{border-color:#4a5568;color:#4a5568;background:#f8f9fb}
+.vbtn.down.on{background:#4a5568;border-color:#4a5568;color:#fff}
+.vbtn.on .n{color:#fff}
+.vote-hint{text-align:center;font-size:11.5px;color:#a6adbd;padding-bottom:20px;margin-top:-16px}
+.post-tools{display:flex;justify-content:flex-end;gap:6px;padding:0 18px 14px}
+
+/* ---------- 댓글 ---------- */
+.cbox{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.cbox-head{padding:13px 18px;border-bottom:1px solid var(--line-soft);font-size:13px;font-weight:800;
+  color:#3c4457;display:flex;align-items:center;gap:6px}
+.cbox-head .num{color:var(--red)}
+.cmt-item{padding:12px 18px;border-bottom:1px solid var(--line-soft);font-size:13.5px}
+.cmt-item:last-child{border-bottom:0}
+.cmt-item.reply{margin-left:30px;border-left:2px solid #eaeef8;padding-left:14px;background:#fafbff}
+.cmt-top{display:flex;align-items:center;gap:7px;font-size:11.5px;color:#9aa1b2;flex-wrap:wrap}
+.cmt-nick{font-weight:800;color:#3c4457;font-size:12.5px}
+.cmt-body{margin-top:5px;white-space:pre-wrap;word-break:break-word;color:#3a4152;line-height:1.65}
+.cmt-actions{display:flex;gap:12px;margin-top:7px}
+.cmt-actions button{border:0;background:none;color:#a2a9b8;font-size:11.5px;cursor:pointer;padding:0;font-weight:600}
+.cmt-actions button:hover{color:var(--navy)}
+.cmt-empty{padding:26px 18px;text-align:center;color:#a2a9b8;font-size:12.5px}
+.cmtform{padding:14px 18px 16px;background:#fafbfe;border-top:1px solid var(--line-soft)}
+.cmtform textarea{width:100%;border:1px solid #dde1ea;border-radius:8px;padding:10px 12px;
+  font-family:inherit;font-size:13.5px;resize:vertical;outline:none;line-height:1.6;color:var(--ink);min-height:64px}
+.cmtform textarea:focus{border-color:var(--navy-2);box-shadow:0 0 0 3px rgba(59,72,144,.09)}
+.cf-foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:10px}
+.cf-hint{font-size:11.5px;color:#a2a9b8}
+.login-box{padding:18px;background:#fafbfe;border-top:1px solid var(--line-soft);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.login-box p{margin:0;font-size:12.5px;color:#6b7387}
+
+/* ---------- 글쓰기 ---------- */
+.write{background:#fff;border:1px solid var(--line);border-radius:12px;margin-top:18px;overflow:hidden}
+.write-head{padding:18px 22px;border-bottom:1px solid var(--line-soft);font-size:17px;font-weight:800;
+  display:flex;align-items:center;justify-content:space-between;gap:10px}
+.write-body{padding:20px 22px 24px;display:flex;flex-direction:column;gap:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.row{flex-direction:row;gap:10px;align-items:center;flex-wrap:wrap}
+.field-row{display:flex;gap:12px;flex-wrap:wrap}
+.field-row .field{flex:1 1 150px;min-width:132px}
+.field-row .sel{width:100%}
+.field label{font-size:12.5px;font-weight:700;color:#5b6478}
+.field .req{color:var(--red);margin-left:2px}
+.inp,.sel,.ta{border:1px solid #dde1ea;border-radius:8px;padding:10px 12px;font-family:inherit;
+  font-size:13.5px;outline:none;color:var(--ink);background:#fff}
+.inp:focus,.sel:focus,.ta:focus{border-color:var(--navy-2);box-shadow:0 0 0 3px rgba(59,72,144,.09)}
+.sel{min-width:130px}
+.ta{resize:vertical;min-height:220px;line-height:1.7}
+.write-foot{display:flex;justify-content:flex-end;gap:8px;padding:0 22px 22px}
+.form-error{margin:0;color:var(--red);font-size:12px;font-weight:600;min-height:16px}
+.field-hint{font-size:11.5px;color:#a2a9b8}
+
+/* ---------- 모달 ---------- */
+.backdrop{position:fixed;inset:0;background:rgba(20,26,50,.55);display:flex;align-items:center;
+  justify-content:center;z-index:100;padding:16px;animation:fade .15s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:404px;position:relative;
+  box-shadow:0 24px 70px rgba(15,20,45,.32);animation:pop .18s ease;overflow:hidden}
+.modal-x{position:absolute;top:10px;right:10px;border:0;background:transparent;color:#9aa1b2;
+  font-size:16px;cursor:pointer;padding:6px 8px;border-radius:6px;line-height:1}
+.modal-x:hover{background:#f1f3f8;color:#4a5265}
+.auth-head{background:linear-gradient(135deg,#3b4890,#29367c);color:#fff;padding:20px 22px 18px;
+  display:flex;align-items:center;gap:12px}
+.auth-logo{width:40px;height:40px;border-radius:10px;background:#fff;color:var(--navy);display:grid;
+  place-items:center;font-size:20px;font-weight:900;flex:none}
+.auth-head strong{display:block;font-size:17px;font-weight:800;letter-spacing:-.3px}
+.auth-head span{display:block;font-size:11.5px;color:#c3ccef;margin-top:2px}
+.modal-msg{margin:16px 22px 0;padding:10px 12px;background:#f5f7ff;border:1px solid #e2e7f8;
+  border-radius:8px;font-size:12.5px;color:#3b4890;line-height:1.5}
+.auth-tabs{display:flex;padding:14px 22px 0;gap:4px}
+.auth-tab{flex:1;border:0;background:#f4f5f9;color:#7b8497;font-weight:800;font-size:13px;
+  padding:9px 0;cursor:pointer;border-radius:8px 8px 0 0;border-bottom:2px solid transparent}
+.auth-tab.on{background:#fff;color:var(--navy);border-bottom-color:var(--navy)}
+.auth-form{padding:18px 22px 22px;display:flex;flex-direction:column;gap:11px}
+.auth-form .field{gap:5px}
+.auth-form .inp{padding:10px 12px}
+.auth-submit{width:100%;justify-content:center;padding:11px;font-size:14px;margin-top:2px}
+.auth-note{font-size:11.5px;color:#9aa1b2;line-height:1.6;background:#f8f9fc;border-radius:8px;padding:9px 11px}
+.auth-note b{color:#5b6478}
+.confirm-modal{max-width:360px}
+.confirm-body{padding:22px 22px 4px}
+.confirm-title{font-size:16px;font-weight:800;margin:0 0 8px}
+.confirm-text{margin:0;font-size:13px;color:#6b7387;line-height:1.65;white-space:pre-line}
+.confirm-foot{display:flex;justify-content:flex-end;gap:8px;padding:18px 22px 20px}
+
+/* ---------- 토스트 ---------- */
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);background:#232f6e;color:#fff;
+  padding:10px 18px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;
+  transition:opacity .2s,transform .2s;z-index:200;box-shadow:0 10px 26px rgba(20,26,60,.32);
+  max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- 푸터 ---------- */
+.site-footer{border-top:1px solid var(--line);background:#fff;padding:22px 0 44px;font-size:11.5px;
+  color:#98a0b2;line-height:1.75;margin-top:30px}
+.site-footer b{color:#5b6478}
+.foot-links{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.foot-links button{border:0;background:none;padding:0;color:#98a0b2;font-size:11.5px;
+  text-decoration:underline;cursor:pointer;font-family:inherit}
+.foot-links button:hover{color:var(--red)}
+
+/* ---------- 모바일 플로팅 버튼 ---------- */
+.fab{display:none}
+
+/* ---------- 반응형 ---------- */
+@media (max-width:760px){
+  .header-inner{flex-wrap:wrap;gap:10px;padding:12px 16px 14px}
+  .hsearch{order:3;flex:1 1 100%;max-width:none;margin:0}
+  .board-head{padding:18px 0 4px}
+  .board-title{font-size:19px}
+  .post-head,.post-row{grid-template-columns:52px 66px minmax(0,1fr) 92px 66px}
+  .post-head .ph-views,.post-head .ph-votes,.c-views,.c-votes{display:none}
+}
+@media (max-width:640px){
+  .topbar-note{font-size:10.5px}
+  .post-head{display:none}
+  .post-table{border-radius:9px}
+  .gnav{padding:11px 8px;font-size:12.5px}
+  .gnav .ico{display:none}
+  .post-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;
+    grid-template-areas:"head title title" "author date votes";
+    align-items:center;gap:3px 8px;padding:10px 12px;min-height:0;font-size:13px}
+  .post-row .c-no,.post-row .c-views{display:none}
+  .post-row .c-head{grid-area:head;text-align:left}
+  .post-row .c-title{grid-area:title;min-width:0}
+  .post-row .c-title .t{font-size:13.5px}
+  .post-row .c-author{grid-area:author;text-align:left;font-size:12px;color:#7b8497}
+  .post-row .c-date{grid-area:date;text-align:left;font-size:11.5px}
+  .post-row .c-votes{grid-area:votes;justify-self:end;display:block;font-size:11.5px}
+  .post-row .c-votes .up{color:#c9a0a0}
+  .post-sub{gap:7px}
+  .post-sub .sep{display:none}
+  .searchbar{margin-left:0;width:100%}
+  .searchbar input{flex:1;width:auto;min-width:0}
+  .seg-note{width:100%;margin-top:2px}
+  .post-title{font-size:18px}
+  .post-top{padding:16px 16px 13px}
+  .post-body{padding:18px 16px 24px;font-size:14.5px;line-height:1.78}
+  .votebar{padding:0 14px 22px}
+  .vbtn{flex:1;justify-content:center;padding:11px 8px}
+  .cmtform{padding:12px 14px 16px}
+  .cmt-item{padding:12px 14px}
+  .cmt-item.reply{margin-left:14px;padding-left:11px}
+  .write-body{padding:16px 16px 20px}
+  .write-foot{padding:0 16px 18px}
+  .write-foot .btn{flex:1}
+  .board-actions .btn{padding:7px 11px;font-size:12.5px}
+  .fab{display:flex;position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom));
+    z-index:40;background:var(--navy);color:#fff;border:0;border-radius:24px;padding:12px 19px;
+    font-weight:800;font-size:13px;box-shadow:0 10px 24px rgba(41,54,124,.42);cursor:pointer;
+    align-items:center;gap:6px}
+  .site-footer{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+  .toast{bottom:calc(80px + env(safe-area-inset-bottom))}
+}
+@media (max-width:380px){
+  .logo-title{font-size:18px}
+  .logo-sub{font-size:8.5px;letter-spacing:1.2px}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#view">본문 바로가기</a>
+
+<div class="topbar">
+  <div class="wrap">
+    <span class="topbar-note">읽기는 누구나 · 글쓰기·댓글·개추는 회원만 (데모 데이터는 이 브라우저에만 저장됩니다)</span>
+    <div class="account" id="accountArea"></div>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="logo" href="#/g/free" aria-label="도훈갤 홈">
+      <span class="logo-mark">도</span>
+      <span class="logo-text">
+        <span class="logo-title">도훈갤</span>
+        <span class="logo-sub">DOHOON GALLERY</span>
+      </span>
+    </a>
+    <form class="hsearch" data-form="header-search" role="search">
+      <input type="search" name="q" id="headerSearch" placeholder="갤러리 통합 검색" aria-label="갤러리 통합 검색" autocomplete="off">
+      <button type="submit" aria-label="검색">검색</button>
+    </form>
+  </div>
+</header>
+
+<nav class="gallery-nav" aria-label="갤러리 목록">
+  <div class="wrap" id="galleryNav"></div>
+</nav>
+
+<main id="view" tabindex="-1"></main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div><b>도훈갤</b> — 디시인사이드 스타일 커뮤니티 데모 · HTML/CSS/JS 단일 파일</div>
+    <div>모든 글·계정은 이 브라우저의 <b>localStorage</b>에만 저장됩니다. 서버로 전송되는 데이터는 없습니다.</div>
+    <div class="foot-links">
+      <span>관리자: 최초 가입 계정이 자동으로 관리자가 됩니다.</span>
+      <button type="button" data-action="reset-demo">데모 데이터 초기화</button>
+    </div>
+  </div>
+</footer>
+
+<div id="modalRoot"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* =========================================================================
+   도훈갤 — 디시인사이드 스타일 커뮤니티
+   -------------------------------------------------------------------------
+   구조
+     0. 설정
+     1. 공통 유틸
+     2. 데이터 레이어 (LocalStore / SupabaseStore)
+        · 모든 메서드는 async 이며, 두 구현이 같은 시그니처를 씁니다.
+        · 아래 CONFIG.backend 를 'supabase' 로 바꾸고 supabase-js 를 붙이면
+          화면 코드(3~6)는 한 줄도 바꾸지 않고 그대로 동작합니다.
+     3. 시드 데이터 (첫 실행 시 데모 DB 생성)
+     4. 라우팅 + 렌더링
+     5. 인증/모달/토스트 UI
+     6. 이벤트 위임
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  /* ========================= 0. 설정 ========================= */
+  const CONFIG = {
+    backend: 'local',                    // 'local' | 'supabase'
+    supabaseUrl: '',                     // 예: https://xxxx.supabase.co
+    supabaseAnonKey: '',
+    conceptThreshold: 10,                // 개념글 기준 추천 수
+    storageKey: 'dohoon-gallery:db:v1',
+    sessionKey: 'dohoon-gallery:session:v1'
+  };
+
+  const HEADS = ['일반', '질문', '정보', '뉴스', '후기'];
+
+  /* ========================= 1. 공통 유틸 ========================= */
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.prototype.slice.call((root || document).querySelectorAll(sel));
+
+  function esc(v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function fmtNum(n) { return Number(n || 0).toLocaleString('ko-KR'); }
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  /* 오늘 → HH:mm, 올해 → MM.DD, 그 외 → YY.MM.DD */
+  function fmtDate(ts) {
+    const d = new Date(ts), now = new Date();
+    if (d.toDateString() === now.toDateString()) return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    if (d.getFullYear() === now.getFullYear()) return pad2(d.getMonth() + 1) + '.' + pad2(d.getDate());
+    return String(d.getFullYear()).slice(2) + '.' + pad2(d.getMonth() + 1) + '.' + pad2(d.getDate());
+  }
+  function isNew(ts) { return Date.now() - ts < 24 * 60 * 60 * 1000; }
+  /* 2026.11.23 00:00 (상세 화면용) */
+  function fmtFullDate(ts) {
+    const d = new Date(ts);
+    return d.getFullYear() + '.' + pad2(d.getMonth() + 1) + '.' + pad2(d.getDate()) +
+      ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+  function validId(v) { return /^[a-zA-Z0-9_]{4,16}$/.test(v); }
+  function validEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v); }
+
+  let toastTimer = null;
+  function toast(msg) {
+    const el = $('#toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+  }
+
+  /* 파일:// 에서도 동작하는 비밀번호 해시 (데모용 SHA-256 + salt) */
+  async function hashPassword(password, salt) {
+    const raw = salt + '::' + password;
+    if (window.crypto && crypto.subtle && crypto.subtle.digest) {
+      try {
+        const buf = new TextEncoder().encode(raw);
+        const digest = await crypto.subtle.digest('SHA-256', buf);
+        return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+      } catch (e) { /* fall through */ }
+    }
+    let h1 = 0x811c9dc5, h2 = 0x1000193;
+    for (let i = 0; i < raw.length; i++) {
+      h1 = (h1 ^ raw.charCodeAt(i)) * 0x01000193 >>> 0;
+      h2 = (h2 + raw.charCodeAt(i) * (i + 7)) >>> 0;
+    }
+    return 'fb' + h1.toString(16) + h2.toString(16);
+  }
+  function makeSalt() {
+    const a = new Uint8Array(12);
+    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a);
+    else for (let i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 256);
+    return Array.from(a).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  /* =========================================================================
+     2. 데이터 레이어
+     -------------------------------------------------------------------------
+     화면 코드가 쓰는 인터페이스 (양쪽 구현 공통):
+
+       init()                                  초기화
+       me()                                    현재 로그인 사용자 | null
+       listGalleries()                         갤러리 목록
+       getGallery(id)                          갤러리 1개
+       listPosts({galleryId, mode, q, field})  글 목록 (mode: all|concept)
+       getPost(id)                             글 1개 + 작성자 + 집계 + 내 투표
+       viewPost(id)                            조회수 +1
+       createPost({galleryId, head, title, body})
+       deletePost(id)
+       listComments(postId)                    댓글 (부모/대댓글)
+       createComment({postId, parentId, body})
+       deleteComment(id)
+       toggleVote(postId, value)               value: 1 | -1 (같은 값이면 취소)
+       signUp({username, email, password, nickname})
+       signIn({username, password})
+       signOut()
+
+     Supabase 로 옮길 때의 대응은 SupabaseStore 주석과 supabase-schema.sql 참고.
+     ========================================================================= */
+
+  class LocalStore {
+    constructor() {
+      this.db = null;
+      this.session = null;
+    }
+
+    /* ---------- 저장/로드 ---------- */
+    async init() {
+      let raw = null;
+      try { raw = localStorage.getItem(CONFIG.storageKey); } catch (e) { raw = null; }
+      if (raw) {
+        try { this.db = JSON.parse(raw); } catch (e) { this.db = null; }
+      }
+      if (!this.db || !this.db.posts) {
+        this.db = buildSeed();
+        this._save();
+      }
+      try {
+        const s = localStorage.getItem(CONFIG.sessionKey);
+        this.session = s ? JSON.parse(s) : null;
+      } catch (e) { this.session = null; }
+      if (this.session && !this.db.users.some(u => u.id === this.session.userId)) this.session = null;
+    }
+    _save() {
+      try { localStorage.setItem(CONFIG.storageKey, JSON.stringify(this.db)); } catch (e) {
+        toast('저장 공간이 가득 찼어요. 데모 데이터를 초기화해 주세요.');
+      }
+    }
+    _saveSession() {
+      try {
+        if (this.session) localStorage.setItem(CONFIG.sessionKey, JSON.stringify(this.session));
+        else localStorage.removeItem(CONFIG.sessionKey);
+      } catch (e) { /* ignore */ }
+    }
+    _user(id) { return this.db.users.find(u => u.id === id) || null; }
+    _publicUser(u) { return u ? { id: u.id, username: u.username, nickname: u.nickname, isAdmin: !!u.isAdmin } : null; }
+    _votesOf(postId) { return this.db.votes.filter(v => v.postId === postId); }
+    _counts(postId) {
+      const vs = this._votesOf(postId);
+      return {
+        recommend: vs.filter(v => v.value === 1).length,
+        dislike: vs.filter(v => v.value === -1).length
+      };
+    }
+    _commentCount(postId) { return this.db.comments.filter(c => c.postId === postId).length; }
+
+    /* ---------- 조회 ---------- */
+    async me() {
+      if (!this.session) return null;
+      return this._publicUser(this._user(this.session.userId));
+    }
+    async listGalleries() {
+      return this.db.galleries.slice().sort((a, b) => a.order - b.order);
+    }
+    async getGallery(id) {
+      return this.db.galleries.find(g => g.id === id) || null;
+    }
+    async listPosts(opts) {
+      const o = opts || {};
+      const galleryId = o.galleryId || 'free';
+      const mode = o.mode === 'concept' ? 'concept' : 'all';
+      const q = (o.q || '').trim().toLowerCase();
+      const field = o.field || 'title';
+      const myId = this.session ? this.session.userId : null;
+
+      let rows = this.db.posts.filter(p => p.galleryId === galleryId).map(p => {
+        const author = this._user(p.authorId);
+        const c = this._counts(p.id);
+        return {
+          id: p.id,
+          galleryId: p.galleryId,
+          head: p.head,
+          title: p.title,
+          body: p.body,
+          createdAt: p.createdAt,
+          views: p.views,
+          recommend: c.recommend,
+          dislike: c.dislike,
+          commentCount: this._commentCount(p.id),
+          author: this._publicUser(author),
+          isMine: myId === p.authorId,
+          isConcept: c.recommend >= CONFIG.conceptThreshold
+        };
+      });
+
+      if (mode === 'concept') rows = rows.filter(r => r.isConcept);
+      if (q) {
+        rows = rows.filter(r => {
+          const title = r.title.toLowerCase();
+          const nick = (r.author ? r.author.nickname : '').toLowerCase();
+          const body = r.body.toLowerCase();
+          if (field === 'author') return nick.indexOf(q) !== -1;
+          if (field === 'all') return title.indexOf(q) !== -1 || nick.indexOf(q) !== -1 || body.indexOf(q) !== -1;
+          return title.indexOf(q) !== -1;
+        });
+      }
+      rows.sort((a, b) => b.createdAt - a.createdAt || b.id - a.id);
+      return rows;
+    }
+    async getPost(id) {
+      const p = this.db.posts.find(x => x.id === Number(id));
+      if (!p) return null;
+      const author = this._user(p.authorId);
+      const c = this._counts(p.id);
+      const mine = this.session ? this.db.votes.find(v => v.postId === p.id && v.userId === this.session.userId) : null;
+      return {
+        id: p.id,
+        galleryId: p.galleryId,
+        head: p.head,
+        title: p.title,
+        body: p.body,
+        createdAt: p.createdAt,
+        views: p.views,
+        recommend: c.recommend,
+        dislike: c.dislike,
+        commentCount: this._commentCount(p.id),
+        author: this._publicUser(author),
+        isMine: this.session ? this.session.userId === p.authorId : false,
+        isConcept: c.recommend >= CONFIG.conceptThreshold,
+        myVote: mine ? mine.value : 0
+      };
+    }
+    async viewPost(id) {
+      const p = this.db.posts.find(x => x.id === Number(id));
+      if (!p) return;
+      p.views += 1;
+      this._save();
+    }
+
+    /* ---------- 쓰기 ---------- */
+    async createPost(input) {
+      if (!this.session) throw new Error('로그인이 필요합니다.');
+      const id = ++this.db.meta.postSeq;
+      const post = {
+        id: id,
+        galleryId: input.galleryId,
+        authorId: this.session.userId,
+        head: HEADS.indexOf(input.head) >= 0 ? input.head : '일반',
+        title: input.title,
+        body: input.body,
+        views: 0,
+        createdAt: Date.now()
+      };
+      this.db.posts.push(post);
+      this._save();
+      return id;
+    }
+    async deletePost(id) {
+      const pid = Number(id);
+      const p = this.db.posts.find(x => x.id === pid);
+      if (!p) throw new Error('이미 삭제된 글입니다.');
+      const me = await this.me();
+      if (!me) throw new Error('로그인이 필요합니다.');
+      if (p.authorId !== me.id && !me.isAdmin) throw new Error('삭제 권한이 없습니다.');
+      this.db.posts = this.db.posts.filter(x => x.id !== pid);
+      this.db.comments = this.db.comments.filter(c => c.postId !== pid);
+      this.db.votes = this.db.votes.filter(v => v.postId !== pid);
+      this._save();
+    }
+    async listComments(postId) {
+      const pid = Number(postId);
+      return this.db.comments
+        .filter(c => c.postId === pid)
+        .sort((a, b) => a.createdAt - b.createdAt || a.id - b.id)
+        .map(c => ({
+          id: c.id,
+          postId: c.postId,
+          parentId: c.parentId || null,
+          body: c.body,
+          createdAt: c.createdAt,
+          author: this._publicUser(this._user(c.authorId)),
+          isMine: this.session ? this.session.userId === c.authorId : false
+        }));
+    }
+    async createComment(input) {
+      if (!this.session) throw new Error('로그인이 필요합니다.');
+      const id = ++this.db.meta.commentSeq;
+      this.db.comments.push({
+        id: id,
+        postId: Number(input.postId),
+        parentId: input.parentId ? Number(input.parentId) : null,
+        authorId: this.session.userId,
+        body: input.body,
+        createdAt: Date.now()
+      });
+      this._save();
+      return id;
+    }
+    async deleteComment(id) {
+      const cid = Number(id);
+      const c = this.db.comments.find(x => x.id === cid);
+      if (!c) return;
+      const me = await this.me();
+      if (!me) throw new Error('로그인이 필요합니다.');
+      if (c.authorId !== me.id && !me.isAdmin) throw new Error('삭제 권한이 없습니다.');
+      const remove = new Set([cid]);
+      this.db.comments.forEach(x => { if (x.parentId === cid) remove.add(x.id); });
+      this.db.comments = this.db.comments.filter(x => !remove.has(x.id));
+      this._save();
+    }
+    async toggleVote(postId, value) {
+      if (!this.session) throw new Error('로그인이 필요합니다.');
+      const pid = Number(postId);
+      const v = value === -1 ? -1 : 1;
+      const idx = this.db.votes.findIndex(x => x.postId === pid && x.userId === this.session.userId);
+      if (idx >= 0) {
+        if (this.db.votes[idx].value === v) this.db.votes.splice(idx, 1);   // 같은 버튼 다시 → 취소
+        else this.db.votes[idx].value = v;                                  // 반대 버튼 → 전환
+      } else {
+        this.db.votes.push({ postId: pid, userId: this.session.userId, value: v, createdAt: Date.now() });
+      }
+      this._save();
+      const c = this._counts(pid);
+      const mine = this.db.votes.find(x => x.postId === pid && x.userId === this.session.userId);
+      return { recommend: c.recommend, dislike: c.dislike, myVote: mine ? mine.value : 0 };
+    }
+
+    /* ---------- 계정 ---------- */
+    async signUp(input) {
+      const username = String(input.username || '').trim();
+      const email = String(input.email || '').trim().toLowerCase();
+      const nickname = String(input.nickname || '').trim();
+      const password = String(input.password || '');
+
+      if (!validId(username)) throw new Error('아이디는 영문·숫자·밑줄 4~16자로 입력해 주세요.');
+      if (!nickname || nickname.length < 2 || nickname.length > 12) throw new Error('닉네임은 2~12자로 입력해 주세요.');
+      if (!validEmail(email)) throw new Error('이메일 형식이 올바르지 않습니다.');
+      if (password.length < 6) throw new Error('비밀번호는 6자 이상이어야 합니다.');
+      if (this.db.users.some(u => u.username.toLowerCase() === username.toLowerCase()))
+        throw new Error('이미 사용 중인 아이디입니다.');
+      if (this.db.users.some(u => u.email === email))
+        throw new Error('이미 사용 중인 이메일입니다.');
+      if (this.db.users.some(u => u.nickname.toLowerCase() === nickname.toLowerCase()))
+        throw new Error('이미 사용 중인 닉네임입니다.');
+
+      const salt = makeSalt();
+      const passwordHash = await hashPassword(password, salt);
+      const isAdmin = !this.db.users.some(u => u.isAdmin);   // 최초 가입자 = 관리자
+      const user = {
+        id: 'u' + (++this.db.meta.userSeq),
+        username: username,
+        email: email,
+        nickname: nickname,
+        salt: salt,
+        passwordHash: passwordHash,
+        isAdmin: isAdmin,
+        createdAt: Date.now()
+      };
+      this.db.users.push(user);
+      this._save();
+      this.session = { userId: user.id };
+      this._saveSession();
+      return { user: this._publicUser(user), isFirstAdmin: isAdmin };
+    }
+    async signIn(input) {
+      const key = String(input.username || '').trim().toLowerCase();
+      const password = String(input.password || '');
+      const user = this.db.users.find(u => u.username.toLowerCase() === key || u.email === key);
+      if (!user || !user.passwordHash) throw new Error('아이디 또는 비밀번호가 맞지 않습니다.');
+      const hash = await hashPassword(password, user.salt);
+      if (hash !== user.passwordHash) throw new Error('아이디 또는 비밀번호가 맞지 않습니다.');
+      this.session = { userId: user.id };
+      this._saveSession();
+      return this._publicUser(user);
+    }
+    async signOut() {
+      this.session = null;
+      this._saveSession();
+    }
+  }
+
+  /* -------------------------------------------------------------------------
+     SupabaseStore — LocalStore와 동일한 인터페이스
+     사용법:
+       1) supabase-schema.sql 을 Supabase SQL Editor에서 실행
+       2) supabase-js v2 CDN 스크립트를 body 맨 끝(스크립트 태그 이전)에 추가
+          (https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)
+       3) CONFIG.backend='supabase', supabaseUrl / supabaseAnonKey 채우기
+       4) 아래 주석 처리된 생성 코드 사용
+     ------------------------------------------------------------------------- */
+  class SupabaseStore {
+    constructor(client) {
+      this.sb = client;
+      this._me = null;
+    }
+
+    async init() {
+      const { data } = await this.sb.auth.getSession();
+      this._me = data && data.session ? await this.me() : null;
+    }
+    async me() {
+      const { data: userData } = await this.sb.auth.getUser();
+      if (!userData || !userData.user) return null;
+      const { data, error } = await this.sb.from('profiles')
+        .select('id, username, nickname, is_admin').eq('id', userData.user.id).single();
+      if (error || !data) return null;
+      this._me = { id: data.id, username: data.username, nickname: data.nickname, isAdmin: data.is_admin };
+      return this._me;
+    }
+    async listGalleries() {
+      const { data } = await this.sb.from('galleries').select('*').order('sort_order');
+      return data || [];
+    }
+    async getGallery(id) {
+      const { data } = await this.sb.from('galleries').select('*').eq('id', id).maybeSingle();
+      return data || null;
+    }
+    async listPosts(opts) {
+      const o = opts || {};
+      let q = this.sb.from('post_list')
+        .select('*')
+        .eq('gallery_id', o.galleryId || 'free')
+        .order('created_at', { ascending: false });
+      if (o.mode === 'concept') q = q.eq('is_concept', true);
+      if (o.q) {
+        const term = o.q.replace(/[%,]/g, ' ');
+        if (o.field === 'author') q = q.ilike('nickname', '%' + term + '%');
+        else if (o.field === 'all') q = q.or('title.ilike.%' + term + '%,nickname.ilike.%' + term + '%,body.ilike.%' + term + '%');
+        else q = q.ilike('title', '%' + term + '%');
+      }
+      const { data } = await q.limit(100);
+      return (data || []).map(r => ({
+        id: r.id, galleryId: r.gallery_id, head: r.head, title: r.title, body: r.body,
+        createdAt: new Date(r.created_at).getTime(), views: r.views,
+        recommend: r.recommend_count, dislike: r.dislike_count, commentCount: r.comment_count,
+        author: { id: r.author_id, nickname: r.nickname, isAdmin: r.is_admin },
+        isMine: !!(this._me && this._me.id === r.author_id),
+        isConcept: r.recommend_count >= CONFIG.conceptThreshold
+      }));
+    }
+    async getPost(id) {
+      const { data: p } = await this.sb.from('post_list').select('*').eq('id', id).maybeSingle();
+      if (!p) return null;
+      let myVote = 0;
+      if (this._me) {
+        const { data: v } = await this.sb.from('votes').select('value')
+          .eq('post_id', id).eq('user_id', this._me.id).maybeSingle();
+        myVote = v ? v.value : 0;
+      }
+      return {
+        id: p.id, galleryId: p.gallery_id, head: p.head, title: p.title, body: p.body,
+        createdAt: new Date(p.created_at).getTime(), views: p.views,
+        recommend: p.recommend_count, dislike: p.dislike_count, commentCount: p.comment_count,
+        author: { id: p.author_id, nickname: p.nickname, isAdmin: p.is_admin },
+        isMine: !!(this._me && this._me.id === p.author_id),
+        isConcept: p.recommend_count >= CONFIG.conceptThreshold,
+        myVote: myVote
+      };
+    }
+    async viewPost(id) {
+      await this.sb.rpc('increment_post_views', { p_id: id });
+    }
+    async createPost(input) {
+      const me = this._me || await this.me();
+      if (!me) throw new Error('로그인이 필요합니다.');
+      const { data, error } = await this.sb.from('posts').insert({
+        gallery_id: input.galleryId, author_id: me.id,
+        head: input.head, title: input.title, body: input.body
+      }).select('id').single();
+      if (error) throw new Error(error.message);
+      return data.id;
+    }
+    async deletePost(id) {
+      const { error } = await this.sb.from('posts').delete().eq('id', id);
+      if (error) throw new Error(error.message);
+    }
+    async listComments(postId) {
+      const { data } = await this.sb.from('comments')
+        .select('id, post_id, parent_id, body, created_at, author_id, profiles(nickname, is_admin)')
+        .eq('post_id', postId).order('created_at');
+      return (data || []).map(c => ({
+        id: c.id, postId: c.post_id, parentId: c.parent_id, body: c.body,
+        createdAt: new Date(c.created_at).getTime(),
+        author: { id: c.author_id, nickname: c.profiles ? c.profiles.nickname : '(알수없음)', isAdmin: c.profiles ? c.profiles.is_admin : false },
+        isMine: !!(this._me && this._me.id === c.author_id)
+      }));
+    }
+    async createComment(input) {
+      const me = this._me || await this.me();
+      if (!me) throw new Error('로그인이 필요합니다.');
+      const { data, error } = await this.sb.from('comments').insert({
+        post_id: input.postId, parent_id: input.parentId || null,
+        author_id: me.id, body: input.body
+      }).select('id').single();
+      if (error) throw new Error(error.message);
+      return data.id;
+    }
+    async deleteComment(id) {
+      const { error } = await this.sb.from('comments').delete().eq('id', id);
+      if (error) throw new Error(error.message);
+    }
+    async toggleVote(postId, value) {
+      const me = this._me || await this.me();
+      if (!me) throw new Error('로그인이 필요합니다.');
+      const { data: cur } = await this.sb.from('votes').select('value')
+        .eq('post_id', postId).eq('user_id', me.id).maybeSingle();
+      const v = value === -1 ? -1 : 1;
+      if (cur && cur.value === v) {
+        await this.sb.from('votes').delete().eq('post_id', postId).eq('user_id', me.id);
+      } else {
+        await this.sb.from('votes').upsert({ post_id: postId, user_id: me.id, value: v });
+      }
+      const post = await this.getPost(postId);
+      return { recommend: post.recommend, dislike: post.dislike, myVote: post.myVote };
+    }
+    async signUp(input) {
+      const { data, error } = await this.sb.auth.signUp({
+        email: input.email,
+        password: input.password,
+        options: { data: { username: input.username, nickname: input.nickname } }
+      });
+      if (error) throw new Error(error.message);
+      if (!data.session) throw new Error('가입 확인 메일을 확인한 뒤 로그인해 주세요.');
+      return { user: await this.me(), isFirstAdmin: false };
+    }
+    /* Supabase Auth는 이메일 로그인이 기본입니다. 아이디 로그인이 필요하면
+       username → email 을 돌려주는 RPC를 만들고 여기서 먼저 조회하세요. */
+    async signIn(input) {
+      const key = String(input.username || '').trim();
+      if (key.indexOf('@') === -1) throw new Error('서버 연동 모드에서는 이메일로 로그인합니다. (아이디 로그인은 RPC 추가 필요)');
+      const { error } = await this.sb.auth.signInWithPassword({ email: key, password: input.password });
+      if (error) throw new Error('이메일 또는 비밀번호가 맞지 않습니다.');
+      return this.me();
+    }
+    async signOut() { await this.sb.auth.signOut(); this._me = null; }
+  }
+
+  /* ========================= 3. 시드 데이터 ========================= */
+  const SEED_NICKS = [
+    '한강러너', '롤로노아', '수원블루', '국어는어려워', '야식장인', '갤주',
+    '새벽감성', '수학포기자', '축구보는중', '엘든링충', '피파장인', '주말만기다림',
+    '치킨한마리', '공부는무조건', '도서관단골', '새벽두시', '라면먹고잠', '축구는사랑',
+    '게임은인생', '이불밖은위험', '시험기간', '커피수혈', '만렙찍고싶다', '아무말대잔치',
+    '버스놓친사람', '급식먹고옴', '수학은취미', '영어포기', '주말엔축구', '새벽산책',
+    '라면은진리', '농구공하나', '음악들으면서', '이어폰끼고', '탈출하고싶다', '내일부터',
+    '벼락치기중', '자리좀', '도시락싸옴', '조용히살자'
+  ];
+
+  const SEED_GALLERIES = [
+    { id: 'free',   name: '자유 갤러리',   icon: '💬', desc: '아무 말이나 편하게 올리는 곳', order: 1 },
+    { id: 'game',   name: '게임 갤러리',   icon: '🎮', desc: '게임 이야기, 패치, 세일 정보', order: 2 },
+    { id: 'soccer', name: '축구 갤러리',   icon: '⚽', desc: 'K리그부터 해외축구까지', order: 3 },
+    { id: 'info',   name: '질문·정보 갤러리', icon: '📚', desc: '공부·입시 질문과 정보 공유', order: 4 }
+  ];
+
+  function minutesAgo(m) { return Date.now() - m * 60 * 1000; }
+
+  const SEED_POSTS = [
+    {
+      g: 'free', head: '일반', u: 5, mins: 18, views: 3421, up: 17, down: 2,
+      title: '자야 되는데 폰만 보고 있다',
+      body: '내일 1교시인데 책은 펴지도 않았음.\n"10분만 더"를 벌써 네 번째 하는 중이다.\n이 글 쓰고 진짜 잘 거다.',
+      comments: [
+        { u: 7, mins: 15, body: '10분만 더 → 두 시간 뒤 "아 진짜 자야지"' },
+        { u: 3, mins: 13, body: '이거 완전 내 얘기라서 웃프다' },
+        { u: 0, mins: 12, body: '저도 지금 그 상태예요...', r: 1 },
+        { u: 12, mins: 9, body: '내일 시험인데 갤질하는 사람 여기 또 있다' },
+        { u: 19, mins: 6, body: '폰 내려놓고 자라 ㅋㅋ' }
+      ]
+    },
+    {
+      g: 'free', head: '질문', u: 9, mins: 55, views: 812, up: 4, down: 0,
+      title: '야자 끝나고 집 갈 때 뭐 먹음?',
+      body: '매일 편의점만 가는데 질리는 중.\n집 근처에 24시간 하는 데 있으면 추천 좀. 참고로 걸어서 10분 거리까지 가능.',
+      comments: [
+        { u: 11, mins: 44, body: '그 시간엔 김밥천국이 진리', r: null },
+        { u: 4, mins: 38, body: '새벽에 국물 있는 거 먹으면 다음날 얼굴 부어서 비추' },
+        { u: 9, mins: 30, body: '편의점 도시락도 종류 바꿔 먹으면 안 질리던데', r: 1 }
+      ]
+    },
+    {
+      g: 'free', head: '질문', u: 7, mins: 2600, views: 1310, up: 5, down: 0,
+      title: '도서관 자리 잡기 실패했다',
+      body: '평소보다 30분 늦게 갔더니 자리가 하나도 없음.\n결국 근처 카페 왔는데 커피값이 아깝다.\n다음엔 진짜 일찍 갈 거다.',
+      comments: [
+        { u: 15, mins: 2500, body: '시험 기간엔 30분도 큰 차이죠' },
+        { u: 7, mins: 2400, body: '그래서 요즘은 도서관 문 열자마자 감', r: 0 }
+      ]
+    },
+    {
+      g: 'free', head: '정보', u: 22, mins: 1500, views: 2233, up: 9, down: 0,
+      title: '이번 주말 날씨 진짜 춥대',
+      body: '일기예보 보니까 토요일 최저기온이 영하까지 내려간다고 함.\n야외 일정 있으면 패딩이랑 핫팩 챙기는 게 좋겠다.',
+      comments: [
+        { u: 12, mins: 1400, body: '벌써 감기 기운 있는데 큰일이네' },
+        { u: 4, mins: 1300, body: '핫팩은 진짜 필수템' }
+      ]
+    },
+    {
+      g: 'free', head: '질문', u: 16, mins: 4300, views: 4102, up: 15, down: 1,
+      title: '비 오는 날 듣기 좋은 일본 밴드 노래 추천',
+      body: '요즘 비 오는 날에 들을 만한 곡을 찾고 있음.\n너무 시끄럽지 않고 보컬이 좋은 쪽으로 추천 부탁한다.',
+      comments: [
+        { u: 19, mins: 4200, body: '비 오는 날엔 발라드가 진리입니다' },
+        { u: 16, mins: 4100, body: '밴드면 조금 더 밝은 곡도 좋을 것 같아요', r: 0 },
+        { u: 1, mins: 3900, body: '플레이리스트 만들어서 공유해도 되나요' }
+      ]
+    },
+    {
+      g: 'free', head: '일반', u: 21, mins: 130, views: 1944, up: 11, down: 1,
+      title: '오늘 하루 총평',
+      body: '아침: 늦잠\n점심: 급하게 먹음\n저녁: 야자\n지금: 갤질\n내일은 다르게 살아보겠습니다.',
+      comments: [
+        { u: 8, mins: 120, body: '내일의 나에게 기대를 걸지 마라' },
+        { u: 16, mins: 99, body: '이거 매일 반복임 ㅋㅋ' }
+      ]
+    },
+    {
+      g: 'free', head: '후기', u: 17, mins: 320, views: 2633, up: 13, down: 3,
+      title: '주말에 한강 다녀온 후기',
+      body: '자전거 빌려서 두 시간 정도 탔는데 다리 살 떨린다.\n그래도 노을 진 거 보고 치킨 먹고 온 건 성공.\n다음엔 돗자리 들고 가려고요.',
+      comments: [
+        { u: 5, mins: 300, body: '한강 노을은 진짜 최고' },
+        { u: 13, mins: 280, body: '치킨까지가 세트죠', r: 0 }
+      ]
+    },
+    {
+      g: 'free', head: '일반', u: 2, mins: 610, views: 987, up: 6, down: 0,
+      title: '갤 처음 왔는데 인사한다',
+      body: '친구가 알려줘서 들어왔음.\n여기 분위기 좋네요. 잘 부탁합니다.',
+      comments: [
+        { u: 6, mins: 600, body: '어서 오세요 갤주입니다' },
+        { u: 0, mins: 590, body: '환영합니다~' }
+      ]
+    },
+    {
+      g: 'game', head: '일반', u: 10, mins: 32, views: 5210, up: 22, down: 4,
+      title: 'GTA6 이번 패치로 뭐 바뀐 거 있냐',
+      body: '프레임은 좀 나아진 것 같은데 로딩은 그대로임.\n패치노트 읽어도 잘 모르겠어서 물어봄.',
+      comments: [
+        { u: 18, mins: 25, body: '차량 물리 조금 바뀐 것 같음' },
+        { u: 10, mins: 20, body: '로딩은 SSD로 옮기니까 좀 빨라짐', r: 0 },
+        { u: 23, mins: 11, body: '버그는 여전히 많음 ㅋㅋ' }
+      ]
+    },
+    {
+      g: 'game', head: '질문', u: 14, mins: 95, views: 1782, up: 5, down: 1,
+      title: '롤 배치고사 잘 보는 팁 있냐',
+      body: '지난 시즌 골드였는데 이번에 처음부터 다시 해야 함.\n배치는 몇 판 보는 게 좋은지 아는 사람?',
+      comments: [
+        { u: 8, mins: 80, body: '멘탈 관리가 제일 중요함. 3연패하면 쉬어야 함' },
+        { u: 20, mins: 60, body: '배치 10판 기준이면 대충 5판은 라인 고정하는 게 좋아요', r: 0 }
+      ]
+    },
+    {
+      g: 'game', head: '정보', u: 7, mins: 240, views: 4406, up: 16, down: 1,
+      title: '스팀 세일 시작했네 (종료일 포함)',
+      body: '이번 주말까지라고 함.\n위시리스트에 있던 거 몇 개 질렀는데 생각보다 싸게 샀다.\n세일 목록은 스토어 첫 화면에 떠 있으니 참고.',
+      comments: [
+        { u: 12, mins: 220, body: '정보 고맙습니다 바로 확인함' },
+        { u: 4, mins: 180, body: '지갑이 또 얇아지네' }
+      ]
+    },
+    {
+      g: 'game', head: '일반', u: 11, mins: 470, views: 3021, up: 9, down: 3,
+      title: '누적 120분 접속 미션 다 채운 사람?',
+      body: '오늘은 진짜 시간이 없어서 60분에서 멈췄다.\n보상이 그렇게 큰 건 아니래서 그냥 넘길까 고민 중.',
+      comments: [
+        { u: 18, mins: 450, body: '보상 별로면 그냥 넘기세요 스트레스 받음' },
+        { u: 11, mins: 400, body: '저는 켜놓고 숙제해서 채웠음', r: 0 }
+      ]
+    },
+    {
+      g: 'game', head: '후기', u: 19, mins: 900, views: 6150, up: 24, down: 6,
+      title: '엘든링 DLC 첫 보스 잡았다',
+      body: '스무 번째 도전 끝에 잡음.\n패턴 외우니까 갑자기 쉬워지는 게 신기하다.\n다음 보스는 진짜 무섭다던데.',
+      comments: [
+        { u: 10, mins: 880, body: '축하합니다 ㅋㅋ 저는 아직 3일째' },
+        { u: 2, mins: 850, body: '그 구간 넘으면 진짜 재밌어짐' }
+      ]
+    },
+    {
+      g: 'soccer', head: '일반', u: 2, mins: 40, views: 8732, up: 31, down: 3,
+      title: '수원삼성 우승 축하한다 진짜',
+      body: '어제 경기 보고 새벽 세 시까지 못 잤다.\n올 시즌 고생한 선수들한테 진짜 고맙다고 말해주고 싶음.\n내년에는 1부에서 보자.',
+      comments: [
+        { u: 13, mins: 35, body: '직관 간 사람으로서 진짜 감동이었음' },
+        { u: 2, mins: 30, body: '경기장 분위기 최고였어요', r: 0 },
+        { u: 17, mins: 22, body: '우승 순간에 소리 질렀습니다' }
+      ]
+    },
+    {
+      g: 'soccer', head: '뉴스', u: 8, mins: 190, views: 3188, up: 12, down: 2,
+      title: '이번 시즌 관중 동원 기록 나왔네',
+      body: '지난 시즌보다 꽤 늘었다고 함.\n주말 경기 표는 빨리 없어지더라.\n다음 홈경기는 미리 예매해야겠다.',
+      comments: [
+        { u: 6, mins: 170, body: '티켓 오픈 시간 맞춰서 들어가야 함' }
+      ]
+    },
+    {
+      g: 'soccer', head: '질문', u: 15, mins: 380, views: 1204, up: 3, down: 0,
+      title: '수원월드컵경기장 원정석 어디가 좋음?',
+      body: '처음 원정 가는데 자리 추천 부탁드립니다.\n응원석이랑 일반석 중에 고민 중이에요.',
+      comments: [
+        { u: 2, mins: 360, body: '응원석이 분위기는 압도적입니다. 대신 서서 보는 거 감안하세요' },
+        { u: 15, mins: 340, body: '오 감사합니다!', r: 0 }
+      ]
+    },
+    {
+      g: 'info', head: '정보', u: 3, mins: 150, views: 5602, up: 19, down: 2,
+      title: '국어 어휘 정리한 거 공유함 (PDF 아님, 표로 정리)',
+      body: '시험 볼 때마다 헷갈리는 어휘만 모아서 표로 정리했습니다.\n1) 한자어 2) 헷갈리는 맞춤법 3) 자주 틀리는 표현 순서입니다.\n댓글에 필요한 부분 말해주면 추가로 정리해볼게요.',
+      comments: [
+        { u: 12, mins: 140, body: '와 이거 진짜 필요한 거였는데 감사합니다' },
+        { u: 3, mins: 130, body: '2번 부분 특히 도움 됐어요', r: 0 },
+        { u: 21, mins: 100, body: '저장했습니다' }
+      ]
+    },
+    {
+      g: 'info', head: '질문', u: 16, mins: 260, views: 2011, up: 7, down: 1,
+      title: '확통 문제집 뭐가 좋아?',
+      body: '개념은 한 번 돌렸는데 문제가 안 풀림.\n난이도별로 있는 거 추천해 주면 좋겠습니다.',
+      comments: [
+        { u: 3, mins: 240, body: '기출부터 푸는 게 제일 빨라요' },
+        { u: 16, mins: 200, body: '기출 3년치부터 하라는 말씀이죠?', r: 0 }
+      ]
+    },
+    {
+      g: 'info', head: '정보', u: 13, mins: 3300, views: 2871, up: 8, down: 1,
+      title: '시험 전날 벼락치기 순서 정리',
+      body: '1) 암기 과목 먼저 2) 계산 문제는 마지막 3) 잠은 최소 5시간.\n밤새는 것보다 이 순서가 점수는 더 나왔습니다.',
+      comments: [
+        { u: 3, mins: 3200, body: '잠 5시간이 핵심이네요' },
+        { u: 13, mins: 3100, body: '저는 3시간 자고 망했습니다...', r: 0 }
+      ]
+    },
+    {
+      g: 'info', head: '후기', u: 20, mins: 760, views: 3540, up: 14, down: 4,
+      title: '인강 3주 들은 후기 (광고 아님)',
+      body: '처음 일주일은 배속으로 들었는데 하나도 안 남아서 1배속으로 바꿈.\n노트에 판서 옮겨 적으니까 확실히 다름.\n결론: 배속으로 들을 거면 안 듣는 게 나음.',
+      comments: [
+        { u: 5, mins: 700, body: '배속으로 들으면 진도만 나가고 남는 게 없죠' },
+        { u: 20, mins: 690, body: '공감합니다...', r: 0 }
+      ]
+    }
+  ];
+
+  function buildSeed() {
+    const now = Date.now();
+    const users = SEED_NICKS.map((nick, i) => ({
+      id: 'u' + (i + 1),
+      username: 'seed' + (i + 1),
+      email: 'seed' + (i + 1) + '@example.local',
+      nickname: nick,
+      salt: null,
+      passwordHash: null,
+      isAdmin: false,
+      isSeed: true,
+      createdAt: now - (60 + i) * 24 * 60 * 60 * 1000
+    }));
+
+    const posts = [];
+    const comments = [];
+    const votes = [];
+    let postSeq = 0;
+    let commentSeq = 0;
+
+    const total = SEED_POSTS.length;
+    SEED_POSTS.forEach((sp, idx) => {
+      /* SEED_POSTS는 최신순 → 최신 글이 가장 큰 번호를 갖도록 역순 부여 */
+      const pid = total - idx;
+      postSeq = Math.max(postSeq, pid);
+      const createdAt = minutesAgo(sp.mins);
+      posts.push({
+        id: pid,
+        galleryId: sp.g,
+        authorId: users[sp.u % users.length].id,
+        head: sp.head,
+        title: sp.title,
+        body: sp.body,
+        views: sp.views,
+        createdAt: createdAt
+      });
+
+      /* 추천/비추는 votes 테이블 행으로 저장 (Supabase와 동일한 모델).
+         한 사람이 같은 글에 한 표만 갖도록 서로 다른 유저를 순환 배정한다. */
+      const used = new Set();
+      let cursor = (pid * 7) % users.length;
+      const nextUser = () => {
+        let guard = 0;
+        while (used.has(cursor) && guard < users.length) { cursor = (cursor + 1) % users.length; guard++; }
+        used.add(cursor);
+        const u = users[cursor];
+        cursor = (cursor + 1) % users.length;
+        return u;
+      };
+      const upN = Math.min(sp.up, users.length - 2);
+      const downN = Math.min(sp.down, users.length - upN);
+      for (let i = 0; i < upN; i++) {
+        votes.push({ postId: pid, userId: nextUser().id, value: 1, createdAt: createdAt + i * 60000 });
+      }
+      for (let i = 0; i < downN; i++) {
+        votes.push({ postId: pid, userId: nextUser().id, value: -1, createdAt: createdAt + i * 60000 });
+      }
+
+      const localIds = [];
+      (sp.comments || []).forEach(c => {
+        commentSeq += 1;
+        const cid = commentSeq;
+        const parent = typeof c.r === 'number' && localIds[c.r] ? localIds[c.r] : null;
+        comments.push({
+          id: cid,
+          postId: pid,
+          parentId: parent,
+          authorId: users[c.u % users.length].id,
+          body: c.body,
+          createdAt: minutesAgo(c.mins)
+        });
+        if (typeof c.r !== 'number') localIds.push(cid);
+      });
+    });
+
+    return {
+      version: 1,
+      users: users,
+      galleries: SEED_GALLERIES,
+      posts: posts,
+      comments: comments,
+      votes: votes,
+      meta: { postSeq: postSeq, commentSeq: commentSeq, userSeq: users.length }
+    };
+  }
+
+  /* ========================= 4. 스토어 선택 ========================= */
+  const api = (CONFIG.backend === 'supabase' && window.supabase)
+    ? new SupabaseStore(window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey))
+    : new LocalStore();
+
+  /* ========================= 5. 화면 상태/라우팅 ========================= */
+  const state = {
+    galleryId: 'free',
+    mode: 'all',
+    query: '',
+    field: 'title',
+    replyingTo: null
+  };
+  let afterAuth = null;
+  let confirmResolve = null;
+
+  function parseRoute() {
+    const raw = (location.hash || '').replace(/^#\/?/, '');
+    const seg = raw.split('/').filter(Boolean);
+    if (seg[0] === 'post' && seg[1]) return { name: 'post', id: Number(seg[1]) };
+    if (seg[0] === 'write') return { name: 'write', galleryId: seg[1] || state.galleryId || 'free' };
+    if (seg[0] === 'g' && seg[1]) return { name: 'list', galleryId: seg[1] };
+    return { name: 'list', galleryId: 'free' };
+  }
+
+  function go(hash) {
+    if (location.hash === hash) render(false);
+    else location.hash = hash;
+  }
+
+  /* ========================= 6. 렌더링 ========================= */
+  async function renderChrome(me) {
+    /* 계정 영역 */
+    const acc = $('#accountArea');
+    if (me) {
+      acc.innerHTML =
+        '<span class="who"><b>' + esc(me.nickname) + '</b>' + (me.isAdmin ? '<span class="admin-tag">관리자</span>' : '') + '</span>' +
+        '<button type="button" data-action="logout">로그아웃</button>';
+    } else {
+      acc.innerHTML =
+        '<button type="button" data-action="auth-open" data-mode="login">로그인</button>' +
+        '<button type="button" class="accent" data-action="auth-open" data-mode="signup">회원가입</button>';
+    }
+
+    /* 갤러리 탭 */
+    const galleries = await api.listGalleries();
+    const current = parseRoute();
+    const activeId = current.name === 'list' ? current.galleryId
+      : current.name === 'write' ? current.galleryId : state.galleryId;
+    $('#galleryNav').innerHTML = galleries.map(g =>
+      '<a class="gnav ' + (g.id === activeId ? 'on' : '') + '" href="#/g/' + esc(g.id) + '">' +
+      '<span class="ico">' + esc(g.icon) + '</span>' + esc(g.name) + '</a>'
+    ).join('');
+  }
+
+  function emptyRow(text, withBtn) {
+    return '<div class="empty"><span class="big">🗒️</span>' + esc(text) +
+      (withBtn ? '<br><button class="btn primary" type="button" data-action="write-open">첫 글 쓰기</button>' : '') +
+      '</div>';
+  }
+
+  async function renderList(galleryId) {
+    const g = await api.getGallery(galleryId);
+    if (!g) { location.hash = '#/g/free'; return; }
+    if (state.galleryId !== galleryId) {
+      state.galleryId = galleryId;
+      state.query = '';
+      state.mode = 'all';
+    }
+    const me = await api.me();
+    if (me) await renderChrome(me); else await renderChrome(null);
+    const posts = await api.listPosts({ galleryId: galleryId, mode: state.mode, q: state.query, field: state.field });
+    const all = await api.listPosts({ galleryId: galleryId });
+    const conceptCount = all.filter(p => p.isConcept).length;
+
+    const rows = posts.map(p => {
+      const author = p.author || { nickname: '(알수없음)', isAdmin: false };
+      return '<div class="post-row ' + (p.isConcept ? 'concept' : '') + '" data-href="#/post/' + p.id + '">' +
+        '<div class="c-no">' + p.id + '</div>' +
+        '<div class="c-head"><span class="head-tag" data-h="' + esc(p.head) + '">' + esc(p.head) + '</span></div>' +
+        '<div class="c-title">' +
+          (p.isConcept ? '<span class="badge-concept">개념</span>' : '') +
+          '<a class="t" href="#/post/' + p.id + '">' + esc(p.title) + '</a>' +
+          (p.commentCount ? '<span class="cmt">[' + p.commentCount + ']</span>' : '') +
+          (isNew(p.createdAt) ? '<span class="new">N</span>' : '') +
+        '</div>' +
+        '<div class="c-author">' + esc(author.nickname) +
+          (author.isAdmin ? '<span class="admin-tag">관리자</span>' : '') + '</div>' +
+        '<div class="c-date">' + fmtDate(p.createdAt) + '</div>' +
+        '<div class="c-views">' + fmtNum(p.views) + '</div>' +
+        '<div class="c-votes"><span class="up">▲</span>' + p.recommend + '</div>' +
+      '</div>';
+    }).join('');
+
+    const queryNote = state.query
+      ? '<div class="list-foot"><span>“' + esc(state.query) + '” 검색 결과 ' + posts.length + '건</span>' +
+        '<button class="btn ghost sm" type="button" data-action="clear-search">검색 초기화</button></div>'
+      : '<div class="list-foot"><span>전체 ' + all.length + '개 · 개념글 ' + conceptCount + '개</span>' +
+        '<span>' + (state.mode === 'concept' ? '추천 ' + CONFIG.conceptThreshold + '개 이상' : '최신순') + '</span></div>';
+
+    const view = $('#view');
+    view.innerHTML =
+      '<div class="wrap">' +
+        '<div class="board-head">' +
+          '<div>' +
+            '<h1 class="board-title"><span class="dot"></span>' + esc(g.name) + '</h1>' +
+            '<p class="board-desc">' + esc(g.desc) + '</p>' +
+          '</div>' +
+          '<div class="board-actions">' +
+            '<button class="btn primary" type="button" data-action="write-open">✏️ 글쓰기</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="notice"><b>공지</b><span>비로그인 상태에서도 글을 읽을 수 있어요. 글쓰기·댓글·개추/비추는 회원만 가능합니다. 개념글은 추천 ' + CONFIG.conceptThreshold + '개 이상입니다.</span></div>' +
+
+        '<div class="toolbar">' +
+          '<div class="seg" role="tablist" aria-label="글 분류">' +
+            '<button type="button" role="tab" class="' + (state.mode === 'all' ? 'on' : '') + '" data-action="set-mode" data-mode="all" aria-selected="' + (state.mode === 'all') + '">전체글</button>' +
+            '<button type="button" role="tab" class="' + (state.mode === 'concept' ? 'on' : '') + '" data-action="set-mode" data-mode="concept" aria-selected="' + (state.mode === 'concept') + '">개념글</button>' +
+          '</div>' +
+          '<span class="seg-note">' + (state.mode === 'concept' ? '추천 ' + CONFIG.conceptThreshold + '개 이상만 모아 봅니다' : '') + '</span>' +
+          '<form class="searchbar" data-form="search" role="search">' +
+            '<select name="field" aria-label="검색 대상">' +
+              '<option value="title"' + (state.field === 'title' ? ' selected' : '') + '>제목</option>' +
+              '<option value="author"' + (state.field === 'author' ? ' selected' : '') + '>글쓴이</option>' +
+              '<option value="all"' + (state.field === 'all' ? ' selected' : '') + '>제목+내용</option>' +
+            '</select>' +
+            '<input type="search" name="q" value="' + esc(state.query) + '" placeholder="검색어 입력" aria-label="검색어">' +
+            '<button type="submit">검색</button>' +
+          '</form>' +
+        '</div>' +
+
+        '<div class="post-table">' +
+          '<div class="post-head">' +
+            '<div>번호</div><div>말머리</div><div class="ph-title">제목</div>' +
+            '<div>글쓴이</div><div>작성일</div>' +
+            '<div class="ph-views">조회</div><div class="ph-votes">추천</div>' +
+          '</div>' +
+          (posts.length ? rows : emptyRow(state.query ? '검색 결과가 없어요.' : '아직 글이 없어요.', true)) +
+        '</div>' +
+        queryNote +
+        '<button class="fab" type="button" data-action="write-open">✏️ 글쓰기</button>' +
+      '</div>';
+
+    document.title = g.name + ' · 도훈갤';
+    $('#headerSearch').value = state.query;
+  }
+
+  function commentTreeHtml(comments, me) {
+    if (!comments.length) return '<div class="cmt-empty">아직 댓글이 없어요. 첫 댓글을 남겨 보세요.</div>';
+    const byParent = new Map();
+    comments.forEach(c => {
+      const key = c.parentId || 0;
+      if (!byParent.has(key)) byParent.set(key, []);
+      byParent.get(key).push(c);
+    });
+    const renderOne = (c, isReply) => {
+      const a = c.author || { nickname: '(알수없음)', isAdmin: false };
+      const canDel = me && (c.isMine || me.isAdmin);
+      const kids = byParent.get(c.id) || [];
+      const myNick = me ? me.nickname : '';
+      return '<div class="cmt-item ' + (isReply ? 'reply' : '') + '" id="cmt-' + c.id + '">' +
+        '<div class="cmt-top"><span class="cmt-nick">' + esc(a.nickname) + '</span>' +
+          (a.isAdmin ? '<span class="admin-tag">관리자</span>' : '') +
+          '<span>' + fmtDate(c.createdAt) + '</span></div>' +
+        '<div class="cmt-body">' + esc(c.body) + '</div>' +
+        '<div class="cmt-actions">' +
+          (isReply ? '' : '<button type="button" data-action="reply-open" data-id="' + c.id + '" data-nick="' + esc(a.nickname) + '">답글</button>') +
+          (canDel ? '<button type="button" data-action="delete-comment" data-id="' + c.id + '">삭제</button>' : '') +
+        '</div>' +
+        (state.replyingTo === c.id && me ?
+          '<form class="cmtform" data-form="reply" data-parent="' + c.id + '" style="margin-top:8px;padding:10px;border-top:1px solid #eef1f8">' +
+            '<textarea name="body" rows="2" placeholder="' + esc(myNick) + '님의 답글" aria-label="답글 내용"></textarea>' +
+            '<div class="cf-foot"><span class="cf-hint">Enter 없이 버튼으로 등록</span>' +
+              '<span><button class="btn sm ghost" type="button" data-action="reply-cancel">취소</button>' +
+              '<button class="btn sm primary" type="submit">등록</button></span></div>' +
+          '</form>' : '') +
+        kids.map(k => renderOne(k, true)).join('') +
+      '</div>';
+    };
+    return (byParent.get(0) || []).map(c => renderOne(c, false)).join('');
+  }
+
+  const viewedPosts = new Set();   // 이번 페이지 로드에서 조회수를 이미 올린 글
+  async function renderPost(id) {
+    if (!viewedPosts.has(id)) { await api.viewPost(id); viewedPosts.add(id); }
+    const post = await api.getPost(id);
+    if (post) state.galleryId = post.galleryId;
+    const me = await api.me();
+    await renderChrome(me);
+    const view = $('#view');
+
+    if (!post) {
+      view.innerHTML = '<div class="wrap"><div class="post" style="padding:40px 22px;text-align:center">' +
+        '<p style="font-size:15px;font-weight:700;margin:0 0 8px">삭제되었거나 없는 글입니다.</p>' +
+        '<p style="color:#98a0b2;font-size:12.5px;margin:0 0 18px">주소를 확인하거나 목록으로 돌아가 주세요.</p>' +
+        '<a class="btn primary" href="#/g/' + esc(state.galleryId) + '">목록으로</a></div></div>';
+      document.title = '없는 글 · 도훈갤';
+      return;
+    }
+
+    const gallery = await api.getGallery(post.galleryId);
+    const comments = await api.listComments(post.id);
+    const author = post.author || { nickname: '(알수없음)', isAdmin: false };
+    const canDelete = me && (post.isMine || me.isAdmin);
+    const voteUp = post.myVote === 1 ? ' on' : '';
+    const voteDown = post.myVote === -1 ? ' on' : '';
+
+    view.innerHTML =
+      '<div class="wrap">' +
+        '<div class="crumb"><a href="#/g/' + esc(post.galleryId) + '">' + esc(gallery ? gallery.name : '갤러리') + '</a> › ' +
+          esc(post.head) + '</div>' +
+        '<article class="post">' +
+          '<div class="post-top">' +
+            '<div class="post-headline">' +
+              '<span class="head-tag" data-h="' + esc(post.head) + '" style="font-size:13px">[' + esc(post.head) + ']</span>' +
+              (post.isConcept ? '<span class="badge-concept">개념</span>' : '') +
+              '<h1 class="post-title">' + esc(post.title) + '</h1>' +
+            '</div>' +
+            '<div class="post-sub">' +
+              '<span class="nick">' + esc(author.nickname) + (author.isAdmin ? '<span class="admin-tag">관리자</span>' : '') + '</span>' +
+              '<span class="sep">·</span><span>' + fmtFullDate(post.createdAt) + '</span>' +
+              '<span class="sep">·</span><span>조회 ' + fmtNum(post.views) + '</span>' +
+              '<span class="sep">·</span><span>개추 ' + post.recommend + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="post-body">' + esc(post.body) + '</div>' +
+          '<div class="votebar">' +
+            '<button type="button" class="vbtn up' + voteUp + '" data-action="vote" data-value="1" data-id="' + post.id + '" aria-pressed="' + (post.myVote === 1) + '">' +
+              '개추 <span class="n">' + post.recommend + '</span></button>' +
+            '<button type="button" class="vbtn down' + voteDown + '" data-action="vote" data-value="-1" data-id="' + post.id + '" aria-pressed="' + (post.myVote === -1) + '">' +
+              '비추 <span class="n">' + post.dislike + '</span></button>' +
+          '</div>' +
+          '<div class="vote-hint">로그인 후 누를 수 있어요 · 같은 버튼을 다시 누르면 취소됩니다</div>' +
+          '<div class="post-tools">' +
+            (canDelete ? '<button class="btn sm danger" type="button" data-action="delete-post" data-id="' + post.id + '">삭제</button>' : '') +
+            '<a class="btn sm" href="#/g/' + esc(post.galleryId) + '">목록</a>' +
+          '</div>' +
+        '</article>' +
+
+        '<section class="cbox" aria-label="댓글">' +
+          '<div class="cbox-head">댓글 <span class="num">' + comments.length + '</span></div>' +
+          '<div class="cmt-list">' + commentTreeHtml(comments, me) + '</div>' +
+          (me
+            ? '<form class="cmtform" data-form="comment">' +
+                '<textarea name="body" rows="3" placeholder="' + esc(me.nickname) + '님으로 댓글 쓰기 (비속어 없이 부탁해요)" aria-label="댓글 내용"></textarea>' +
+                '<div class="cf-foot"><span class="cf-hint">댓글은 최대 2,000자</span>' +
+                '<button class="btn primary sm" type="submit">댓글 등록</button></div>' +
+              '</form>'
+            : '<div class="login-box"><p>댓글을 쓰려면 로그인이 필요해요.</p>' +
+                '<button class="btn primary sm" type="button" data-action="auth-open" data-mode="login">로그인 / 회원가입</button></div>') +
+        '</section>' +
+      '</div>';
+
+    document.title = post.title + ' · 도훈갤';
+  }
+
+  async function renderWrite(galleryId) {
+    const me = await api.me();
+    await renderChrome(me);
+    if (!me) {
+      location.hash = '#/g/' + galleryId;
+      openAuth('login', '글을 쓰려면 로그인이 필요합니다.');
+      return;
+    }
+    const galleries = await api.listGalleries();
+    const current = galleries.find(g => g.id === galleryId) || galleries[0];
+    const opts = galleries.map(g =>
+      '<option value="' + esc(g.id) + '"' + (g.id === current.id ? ' selected' : '') + '>' + esc(g.name) + '</option>').join('');
+    const headOpts = HEADS.map(h => '<option value="' + esc(h) + '">' + esc(h) + '</option>').join('');
+
+    $('#view').innerHTML =
+      '<div class="wrap">' +
+        '<div class="board-head"><div><h1 class="board-title"><span class="dot"></span>글쓰기</h1>' +
+          '<p class="board-desc">' + esc(current.name) + '에 글을 남깁니다. 작성자: ' + esc(me.nickname) + '</p></div></div>' +
+        '<form class="write" data-form="write">' +
+          '<div class="write-head">새 글 작성' +
+            '<span class="field-hint">' + esc(current.name) + '</span></div>' +
+          '<div class="write-body">' +
+            '<div class="field-row">' +
+              '<div class="field"><label for="wGallery">갤러리</label>' +
+                '<select class="sel" id="wGallery" name="galleryId">' + opts + '</select></div>' +
+              '<div class="field"><label for="wHead">말머리</label>' +
+                '<select class="sel" id="wHead" name="head">' + headOpts + '</select></div>' +
+            '</div>' +
+            '<div class="field">' +
+              '<label for="wTitle">제목<span class="req">*</span></label>' +
+              '<input class="inp" id="wTitle" name="title" maxlength="80" placeholder="제목을 입력하세요 (최대 80자)" autocomplete="off">' +
+            '</div>' +
+            '<div class="field">' +
+              '<label for="wBody">본문<span class="req">*</span></label>' +
+              '<textarea class="ta" id="wBody" name="body" maxlength="10000" placeholder="내용을 입력하세요.&#10;줄바꿈은 그대로 표시됩니다."></textarea>' +
+              '<span class="field-hint">욕설·도배·개인정보가 담긴 글은 관리자가 삭제할 수 있어요.</span>' +
+            '</div>' +
+            '<p class="form-error" id="writeError"></p>' +
+          '</div>' +
+          '<div class="write-foot">' +
+            '<a class="btn" href="#/g/' + esc(current.id) + '">취소</a>' +
+            '<button class="btn primary" type="submit">등록</button>' +
+          '</div>' +
+        '</form>' +
+      '</div>';
+
+    document.title = '글쓰기 · 도훈갤';
+    const t = $('#wTitle');
+    if (t) t.focus();
+  }
+
+  async function render(keepScroll) {
+    const y = window.scrollY;
+    const route = parseRoute();
+    try {
+      if (route.name === 'post') await renderPost(route.id);
+      else if (route.name === 'write') await renderWrite(route.galleryId);
+      else await renderList(route.galleryId);
+    } catch (err) {
+      console.error(err);
+      $('#view').innerHTML = '<div class="wrap"><div class="empty">화면을 불러오지 못했어요.<br>' +
+        '<span style="font-size:12px;color:#b0b7c6">' + esc(err && err.message ? err.message : 'unknown error') + '</span></div></div>';
+    }
+    if (keepScroll) window.scrollTo(0, y);
+    else window.scrollTo(0, 0);
+  }
+
+  /* ========================= 7. 모달 ========================= */
+  function closeModal() {
+    $('#modalRoot').innerHTML = '';
+    if (confirmResolve) { confirmResolve(false); confirmResolve = null; }
+  }
+
+  function loginFormHtml() {
+    return '<form class="auth-form" data-form="login" novalidate>' +
+      '<div class="field"><label for="liId">아이디 또는 이메일</label>' +
+        '<input class="inp" id="liId" name="username" autocomplete="username" placeholder="아이디 또는 이메일"></div>' +
+      '<div class="field"><label for="liPw">비밀번호</label>' +
+        '<input class="inp" id="liPw" name="password" type="password" autocomplete="current-password" placeholder="비밀번호"></div>' +
+      '<p class="form-error" data-error></p>' +
+      '<button class="btn primary auth-submit" type="submit">로그인</button>' +
+      '<div class="auth-note">아직 계정이 없나요? 위 <b>회원가입</b> 탭에서 30초면 만들어요.<br>첫 번째로 가입한 계정이 <b>관리자</b>가 됩니다.</div>' +
+    '</form>';
+  }
+
+  function signupFormHtml() {
+    return '<form class="auth-form" data-form="signup" novalidate>' +
+      '<div class="field"><label for="suId">아이디</label>' +
+        '<input class="inp" id="suId" name="username" autocomplete="username" placeholder="영문·숫자·밑줄 4~16자"></div>' +
+      '<div class="field"><label for="suNick">닉네임</label>' +
+        '<input class="inp" id="suNick" name="nickname" autocomplete="nickname" placeholder="2~12자, 갤러리에 표시됩니다"></div>' +
+      '<div class="field"><label for="suEmail">이메일</label>' +
+        '<input class="inp" id="suEmail" name="email" type="email" autocomplete="email" placeholder="example@mail.com"></div>' +
+      '<div class="field"><label for="suPw">비밀번호</label>' +
+        '<input class="inp" id="suPw" name="password" type="password" autocomplete="new-password" placeholder="6자 이상"></div>' +
+      '<div class="field"><label for="suPw2">비밀번호 확인</label>' +
+        '<input class="inp" id="suPw2" name="password2" type="password" autocomplete="new-password" placeholder="한 번 더 입력"></div>' +
+      '<p class="form-error" data-error></p>' +
+      '<button class="btn primary auth-submit" type="submit">가입하고 시작하기</button>' +
+      '<div class="auth-note">데모라서 실제 메일 발송·본인인증은 없습니다. 계정은 이 브라우저에만 저장돼요.</div>' +
+    '</form>';
+  }
+
+  function openAuth(mode, message, next) {
+    afterAuth = typeof next === 'function' ? next : null;
+    const m = mode === 'signup' ? 'signup' : 'login';
+    $('#modalRoot').innerHTML =
+      '<div class="backdrop" data-action="modal-bg">' +
+        '<div class="modal auth-modal" role="dialog" aria-modal="true" aria-label="로그인 및 회원가입">' +
+          '<button class="modal-x" type="button" data-action="modal-close" aria-label="닫기">✕</button>' +
+          '<div class="auth-head"><div class="auth-logo">도</div>' +
+            '<div><strong>도훈갤</strong><span>글쓰기 · 댓글 · 개추는 회원만</span></div></div>' +
+          (message ? '<p class="modal-msg">' + esc(message) + '</p>' : '') +
+          '<div class="auth-tabs" role="tablist">' +
+            '<button type="button" role="tab" class="auth-tab ' + (m === 'login' ? 'on' : '') + '" data-action="auth-tab" data-mode="login">로그인</button>' +
+            '<button type="button" role="tab" class="auth-tab ' + (m === 'signup' ? 'on' : '') + '" data-action="auth-tab" data-mode="signup">회원가입</button>' +
+          '</div>' +
+          '<div id="authBody">' + (m === 'login' ? loginFormHtml() : signupFormHtml()) + '</div>' +
+        '</div>' +
+      '</div>';
+    setTimeout(() => { const f = $('#modalRoot .inp'); if (f) f.focus(); }, 40);
+  }
+
+  function switchAuthTab(mode) {
+    const isLogin = mode !== 'signup';
+    $$('#modalRoot .auth-tab').forEach(b => b.classList.toggle('on', b.dataset.mode === (isLogin ? 'login' : 'signup')));
+    $('#authBody').innerHTML = isLogin ? loginFormHtml() : signupFormHtml();
+    const f = $('#modalRoot .inp');
+    if (f) f.focus();
+  }
+
+  function askConfirm(opts) {
+    return new Promise(resolve => {
+      confirmResolve = resolve;
+      $('#modalRoot').innerHTML =
+        '<div class="backdrop" data-action="modal-bg">' +
+          '<div class="modal confirm-modal" role="dialog" aria-modal="true" aria-label="확인">' +
+            '<div class="confirm-body">' +
+              '<p class="confirm-title">' + esc(opts.title || '삭제할까요?') + '</p>' +
+              '<p class="confirm-text">' + esc(opts.message || '') + '</p>' +
+            '</div>' +
+            '<div class="confirm-foot">' +
+              '<button class="btn" type="button" data-action="confirm-no">취소</button>' +
+              '<button class="btn primary" type="button" data-action="confirm-yes">' + esc(opts.confirmText || '삭제') + '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    });
+  }
+
+  function setFormError(form, msg) {
+    const p = form.querySelector('[data-error]') || form.querySelector('.form-error');
+    if (p) p.textContent = msg || '';
+  }
+
+  /* ========================= 8. 이벤트 ========================= */
+  document.addEventListener('click', async function (e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+
+    /* --- 모달 공통 --- */
+    if (action === 'modal-bg') {
+      if (e.target === btn) closeModal();
+      return;
+    }
+    if (action === 'modal-close') { closeModal(); return; }
+    if (action === 'confirm-no') { if (confirmResolve) { const r = confirmResolve; confirmResolve = null; closeModal(); r(false); } return; }
+    if (action === 'confirm-yes') { if (confirmResolve) { const r = confirmResolve; confirmResolve = null; closeModal(); r(true); } return; }
+    if (action === 'auth-tab') { switchAuthTab(btn.dataset.mode); return; }
+    if (action === 'auth-open') {
+      openAuth(btn.dataset.mode || 'login');
+      return;
+    }
+
+    /* --- 계정 --- */
+    if (action === 'logout') {
+      await api.signOut();
+      toast('로그아웃되었습니다.');
+      const r = parseRoute();
+      if (r.name === 'write') location.hash = '#/g/' + (r.galleryId || 'free');
+      await render(true);
+      return;
+    }
+
+    /* --- 목록 --- */
+    if (action === 'set-mode') {
+      state.mode = btn.dataset.mode === 'concept' ? 'concept' : 'all';
+      await render(true);
+      return;
+    }
+    if (action === 'clear-search') {
+      state.query = '';
+      await render(true);
+      return;
+    }
+
+    /* --- 글쓰기 진입(로그인 게이트) --- */
+    if (action === 'write-open') {
+      const me = await api.me();
+      const gid = state.galleryId;
+      if (!me) { openAuth('login', '글을 쓰려면 로그인이 필요합니다.', () => go('#/write/' + gid)); return; }
+      go('#/write/' + gid);
+      return;
+    }
+
+    /* --- 추천/비추 --- */
+    if (action === 'vote') {
+      const me = await api.me();
+      if (!me) { openAuth('login', '개추·비추는 로그인 후 누를 수 있어요.', () => render(true)); return; }
+      try {
+        const res = await api.toggleVote(Number(btn.dataset.id), Number(btn.dataset.value));
+        await render(true);
+        if (res.myVote === 1) toast('개추! 👍');
+        else if (res.myVote === -1) toast('비추를 눌렀습니다.');
+        else toast('추천을 취소했습니다.');
+      } catch (err) { toast(err.message); }
+      return;
+    }
+
+    /* --- 댓글/대댓글 --- */
+    if (action === 'reply-open') {
+      const me = await api.me();
+      if (!me) { openAuth('login', '답글을 쓰려면 로그인이 필요합니다.'); return; }
+      state.replyingTo = Number(btn.dataset.id);
+      await render(true);
+      const ta = $('.cmtform textarea');
+      if (ta) ta.focus();
+      return;
+    }
+    if (action === 'reply-cancel') {
+      state.replyingTo = null;
+      await render(true);
+      return;
+    }
+    if (action === 'delete-comment') {
+      const ok = await askConfirm({ title: '댓글을 삭제할까요?', message: '대댓글이 있으면 함께 삭제됩니다.', confirmText: '삭제' });
+      if (!ok) return;
+      try {
+        await api.deleteComment(Number(btn.dataset.id));
+        toast('댓글을 삭제했습니다.');
+      } catch (err) { toast(err.message); }
+      await render(true);
+      return;
+    }
+    if (action === 'delete-post') {
+      const ok = await askConfirm({ title: '글을 삭제할까요?', message: '글과 댓글, 추천 기록이 모두 사라지고 되돌릴 수 없습니다.', confirmText: '삭제' });
+      if (!ok) return;
+      try {
+        const gid = state.galleryId;
+        await api.deletePost(Number(btn.dataset.id));
+        toast('글을 삭제했습니다.');
+        go('#/g/' + gid);
+      } catch (err) { toast(err.message); }
+      return;
+    }
+
+    /* --- 데모 초기화 --- */
+    if (action === 'reset-demo') {
+      const ok = await askConfirm({ title: '데모 데이터를 초기화할까요?', message: '이 브라우저에 저장된 계정·글·댓글이 모두 지워지고 처음 상태로 돌아갑니다.', confirmText: '초기화' });
+      if (!ok) return;
+      try {
+        localStorage.removeItem(CONFIG.storageKey);
+        localStorage.removeItem(CONFIG.sessionKey);
+      } catch (err) { /* ignore */ }
+      location.hash = '#/g/free';
+      location.reload();
+      return;
+    }
+  });
+
+  /* 목록 행 어디를 눌러도 글 상세로 (모바일 편의) */
+  document.addEventListener('click', function (e) {
+    const row = e.target.closest('.post-row[data-href]');
+    if (!row) return;
+    if (e.target.closest('a, button')) return;
+    if (window.getSelection && String(window.getSelection()).length > 0) return;
+    location.hash = row.dataset.href;
+  });
+
+  /* 폼 제출 */
+  document.addEventListener('submit', async function (e) {
+    const form = e.target.closest('form[data-form]');
+    if (!form) return;
+    e.preventDefault();
+    const kind = form.dataset.form;
+
+    /* 헤더 통합 검색 */
+    if (kind === 'header-search') {
+      const q = (form.q || form.querySelector('input[name="q"]')).value.trim();
+      const route = parseRoute();
+      state.query = q;
+      state.field = 'all';
+      if (route.name !== 'list') { go('#/g/' + state.galleryId); await render(false); }
+      else { await render(true); }
+      return;
+    }
+
+    /* 게시판 검색 */
+    if (kind === 'search') {
+      state.query = form.querySelector('input[name="q"]').value.trim();
+      state.field = form.querySelector('select[name="field"]').value;
+      await render(true);
+      return;
+    }
+
+    /* 로그인 */
+    if (kind === 'login') {
+      const submit = form.querySelector('button[type="submit"]');
+      submit.disabled = true;
+      try {
+        const user = await api.signIn({
+          username: form.username.value.trim(),
+          password: form.password.value
+        });
+        closeModal();
+        toast(user.nickname + '님, 환영합니다!');
+        document.title = '도훈갤';
+        await render(true);
+        if (afterAuth) { const fn = afterAuth; afterAuth = null; fn(); }
+      } catch (err) {
+        setFormError(form, err.message);
+        submit.disabled = false;
+        form.password.focus();
+      }
+      return;
+    }
+
+    /* 회원가입 */
+    if (kind === 'signup') {
+      const submit = form.querySelector('button[type="submit"]');
+      if (form.password.value !== form.password2.value) {
+        setFormError(form, '비밀번호 확인이 일치하지 않습니다.');
+        form.password2.focus();
+        return;
+      }
+      submit.disabled = true;
+      try {
+        const res = await api.signUp({
+          username: form.username.value.trim(),
+          nickname: form.nickname.value.trim(),
+          email: form.email.value.trim(),
+          password: form.password.value
+        });
+        closeModal();
+        toast(res.isFirstAdmin ? '가입 완료! 첫 계정이라 관리자 권한이 생겼습니다.' : '가입 완료! 환영합니다.');
+        await render(true);
+        if (afterAuth) { const fn = afterAuth; afterAuth = null; fn(); }
+      } catch (err) {
+        setFormError(form, err.message);
+        submit.disabled = false;
+      }
+      return;
+    }
+
+    /* 글 등록 */
+    if (kind === 'write') {
+      const title = form.title.value.trim();
+      const body = form.body.value.trim();
+      const errEl = $('#writeError');
+      if (!title) { errEl.textContent = '제목을 입력해 주세요.'; form.title.focus(); return; }
+      if (!body) { errEl.textContent = '본문을 입력해 주세요.'; form.body.focus(); return; }
+      errEl.textContent = '';
+      const submit = form.querySelector('button[type="submit"]');
+      submit.disabled = true;
+      try {
+        const gid = form.galleryId.value;
+        const id = await api.createPost({ galleryId: gid, head: form.head.value, title: title, body: body });
+        state.galleryId = gid;
+        toast('글이 등록되었습니다.');
+        go('#/post/' + id);
+      } catch (err) {
+        errEl.textContent = err.message;
+        submit.disabled = false;
+      }
+      return;
+    }
+
+    /* 댓글 / 대댓글 */
+    if (kind === 'comment' || kind === 'reply') {
+      const ta = form.querySelector('textarea[name="body"]');
+      const body = ta.value.trim();
+      if (!body) { toast('댓글 내용을 입력해 주세요.'); ta.focus(); return; }
+      const route = parseRoute();
+      try {
+        await api.createComment({
+          postId: route.id,
+          parentId: form.dataset.parent ? Number(form.dataset.parent) : null,
+          body: body
+        });
+        state.replyingTo = null;
+        await render(true);
+        toast(form.dataset.parent ? '답글을 등록했습니다.' : '댓글을 등록했습니다.');
+      } catch (err) {
+        toast(err.message);
+      }
+      return;
+    }
+  });
+
+  /* ESC로 모달 닫기 */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && $('#modalRoot').innerHTML) closeModal();
+  });
+
+  /* ========================= 9. 시작 ========================= */
+  window.addEventListener('hashchange', function () { render(false); });
+
+  (async function boot() {
+    await api.init();
+    if (!location.hash) location.hash = '#/g/free';
+    await render(false);
+  })();
+})();
+</script>
+</body>
+</html>
