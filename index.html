@@ -383,7 +383,7 @@ main{min-height:70vh;padding-bottom:70px}
 <footer class="site-footer">
   <div class="wrap">
     <div><b>도훈갤</b> — 디시인사이드 스타일 커뮤니티 데모 · HTML/CSS/JS 단일 파일</div>
-    <div>모든 글·계정은 이 브라우저의 <b>localStorage</b>에만 저장됩니다. 서버로 전송되는 데이터는 없습니다.</div>
+    <div id="storageNote">모든 글·계정은 이 브라우저의 <b>localStorage</b>에만 저장됩니다. 서버로 전송되는 데이터는 없습니다.</div>
     <div class="foot-links">
       <span>관리자: 최초 가입 계정이 자동으로 관리자가 됩니다.</span>
       <button type="button" data-action="reset-demo">데모 데이터 초기화</button>
@@ -394,6 +394,7 @@ main{min-height:70vh;padding-bottom:70px}
 <div id="modalRoot"></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* =========================================================================
    도훈갤 — 디시인사이드 스타일 커뮤니티
@@ -415,9 +416,9 @@ main{min-height:70vh;padding-bottom:70px}
 
   /* ========================= 0. 설정 ========================= */
   const CONFIG = {
-    backend: 'local',                    // 'local' | 'supabase'
-    supabaseUrl: '',                     // 예: https://xxxx.supabase.co
-    supabaseAnonKey: '',
+    backend: 'supabase',                 // 'local' | 'supabase'
+    supabaseUrl: 'https://rezahsrpnfwnytosbgsy.supabase.co',
+    supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlemFoc3JwbmZ3bnl0b3NiZ3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUzNTU5MjcsImV4cCI6MjExMDkzMTkyN30.X3UiGBkzAk1QYcbyhW98-xl9OHD7F1HxE3HMVtykmj8',
     conceptThreshold: 10,                // 개념글 기준 추천 수
     storageKey: 'dohoon-gallery:db:v1',
     sessionKey: 'dohoon-gallery:session:v1'
@@ -1239,6 +1240,11 @@ main{min-height:70vh;padding-bottom:70px}
   const api = (CONFIG.backend === 'supabase' && window.supabase)
     ? new SupabaseStore(window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey))
     : new LocalStore();
+
+  if (api instanceof SupabaseStore) {
+    const note = document.getElementById('storageNote');
+    if (note) note.innerHTML = '글·계정은 <b>서버(Supabase)</b>에 저장되어 모든 방문자에게 공유됩니다.';
+  }
 
   /* ========================= 5. 화면 상태/라우팅 ========================= */
   const state = {

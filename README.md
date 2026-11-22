@@ -1,5 +1,12 @@
 # 도훈갤 — 디시인사이드 스타일 회원제 커뮤니티
 
+## 현재 배포 상태
+
+- 사이트: https://doxhen.github.io/-/ (GitHub Pages, `main` 브랜치 루트)
+- 저장소: https://github.com/doxhen/-
+- DB/인증: Supabase 프로젝트 `dohoon-gallery` (리전 ap-northeast-2) — `CONFIG.backend = 'supabase'` 로 연동됨
+- 회원가입은 이메일 인증 없이 즉시 가입·로그인됩니다.
+
 단일 HTML 파일(`index.html`)로 동작하는 커뮤니티 데모입니다. 서버 없이 브라우저에서 바로 열 수 있고,
 데이터는 `localStorage`에만 저장됩니다. 같은 화면 코드 그대로 Supabase로 옮길 수 있게 데이터 레이어를 분리해 두었습니다.
 
