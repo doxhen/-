@@ -1244,6 +1244,8 @@ main{min-height:70vh;padding-bottom:70px}
   if (api instanceof SupabaseStore) {
     const note = document.getElementById('storageNote');
     if (note) note.innerHTML = '글·계정은 <b>서버(Supabase)</b>에 저장되어 모든 방문자에게 공유됩니다.';
+    const resetBtn = document.querySelector('[data-action="reset-demo"]');
+    if (resetBtn) resetBtn.style.display = 'none';
   }
 
   /* ========================= 5. 화면 상태/라우팅 ========================= */
