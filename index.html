@@ -414,6 +414,10 @@ main{min-height:70vh;padding-bottom:70px}
 (function () {
   'use strict';
 
+  /* 인증 메일 링크로 돌아온 경우 supabase-js 가 URL 해시를 지우기 전에 원래 해시를 잡아 둔다.
+     (해시가 이미 지워지면 인증 완료 안내를 놓치기 때문) */
+  const INITIAL_HASH = String(location.hash || '');
+
   /* ========================= 0. 설정 ========================= */
   const CONFIG = {
     backend: 'supabase',                 // 'local' | 'supabase'
@@ -1997,7 +2001,7 @@ main{min-height:70vh;padding-bottom:70px}
   /* 인증 메일 링크로 돌아온 경우 처리
      성공: #access_token=...&type=signup / 실패: #error_description=... */
   async function handleAuthRedirect() {
-    const raw = location.hash || '';
+    const raw = INITIAL_HASH;
     if (!raw || raw.indexOf('#/') === 0) return false;
     const params = new URLSearchParams(raw.replace(/^#/, ''));
     const errDesc = params.get('error_description') || params.get('error_code') || params.get('error') || '';
