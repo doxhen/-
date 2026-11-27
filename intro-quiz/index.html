@@ -45,6 +45,7 @@
   }
   .brand h1{font-size:18px;margin:0;letter-spacing:-.02em;white-space:nowrap}
   .modes{display:flex;gap:4px;background:rgba(255,255,255,.04);padding:4px;border-radius:11px;border:1px solid var(--line)}
+  .modes[hidden]{display:none}
   .mode-btn{
     border:0;background:transparent;color:var(--muted);padding:7px 11px;border-radius:8px;
     font-size:12px;font-weight:700;transition:.16s;white-space:nowrap;
@@ -378,7 +379,7 @@
     <span class="dot"></span>
     <h1>1초 전주 퀴즈</h1>
   </div>
-  <nav class="modes" aria-label="모드 선택">
+  <nav class="modes" id="modeNav" aria-label="모드 선택">
     <button class="mode-btn active" data-mode="yt">프리셋 20곡</button>
     <button class="mode-btn" data-mode="local">내 음원</button>
   </nav>
@@ -1105,6 +1106,7 @@
     state.cur = 0;
     startOverlay.hidden = true;
     resultOverlay.hidden = true;
+    $("#modeNav").hidden = true;      // 게임 중 모드 전환으로 기록이 날아가지 않게
     startRound();
   }
 
@@ -1243,6 +1245,7 @@
 
   function showStart(){
     resetGame();
+    $("#modeNav").hidden = false;
     resultOverlay.hidden = true;
     startOverlay.hidden = false;
     syncStartUI();
@@ -1277,6 +1280,7 @@
       heardInfo.textContent = "아직 안 들었어요";
       $("#chips").innerHTML = "";
       $$(".listen-row .lbtn").forEach(function(b){ b.disabled = false; b.classList.remove("used"); });
+      $$("[data-nudge]").forEach(function(b){ b.disabled = false; });
       $("#btnHintArtist").disabled = false;
       $("#btnHintCho").disabled = false;
       return;
@@ -1335,6 +1339,10 @@
 
     $("#btnHintArtist").disabled = !!r.done || !!r.artistOn || state.mode === "local";
     $("#btnHintCho").disabled = !!r.done || !!r.choOn;
+
+    $$("[data-nudge]").forEach(function(b){
+      b.disabled = !!(r.done || r.heard > 0);
+    });
 
     var item = cur();
     $("#startVal").textContent = (state.mode === "yt" && item ? songStart(item) : 0).toFixed(1) + "s";
@@ -1491,7 +1499,11 @@
   $$("[data-nudge]").forEach(function(b){
     b.addEventListener("click", function(){
       var item = cur();
+      var g = state.game;
       if (!item || state.mode !== "yt"){ toast("프리셋 곡에서만 조정할 수 있어요"); return; }
+      if (g && g.round && (g.round.heard > 0 || g.round.done)){
+        toast("이미 들었어요 · 시작 지점은 듣기 전에만 조정할 수 있어요"); return;
+      }
       var d = Number(b.dataset.nudge);
       item.nudge = Math.max(-5, Math.min(30, (item.nudge || 0) + d));
       cleanupPlayback();
