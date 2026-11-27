@@ -113,7 +113,7 @@
   body[data-mode="local"] .yt-host{display:none}
   body[data-mode="local"] .eq{display:flex}
 
-  .hud{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:14px 16px;pointer-events:none}
+  .hud{position:absolute;left:0;right:0;bottom:0;z-index:7;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:14px 16px;pointer-events:none}
   .status{
     display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;
     background:rgba(9,12,19,.78);border:1px solid var(--line);border-radius:999px;padding:7px 12px;
@@ -132,8 +132,29 @@
   }
   .count span{font-size:.34em;font-weight:700;color:var(--muted);margin-left:3px}
   .count.live{color:var(--cyan)}
-  .progresswrap{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.06)}
+  .progresswrap{position:absolute;left:0;right:0;bottom:0;z-index:8;height:4px;background:rgba(255,255,255,.06)}
   .progress{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--neon));transition:width .06s linear}
+
+  /* iOS 재생 허용 안내 (가림막 위) */
+  .taphelp{
+    position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;
+    padding:16px;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;
+    background:radial-gradient(circle at 50% 45%, rgba(15,19,28,.93), rgba(5,7,12,.97) 70%);
+    animation:tapfade .22s ease;
+  }
+  .taphelp[hidden]{display:none}
+  .taphelp .th-in{display:flex;flex-direction:column;align-items:center;gap:9px;max-width:330px}
+  .taphelp .th-ic{
+    width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:18px;color:#fff;
+    background:rgba(124,92,255,.26);border:1px solid rgba(124,92,255,.7);
+    box-shadow:0 0 0 8px rgba(124,92,255,.10);animation:pulse 1.6s infinite;
+  }
+  .taphelp .th-t{font-size:15.5px;font-weight:800;color:#fff;letter-spacing:-.01em}
+  .taphelp .th-s{font-size:12.5px;color:#c3cbe0;line-height:1.6;word-break:keep-all}
+  @keyframes tapfade{from{opacity:0}to{opacity:1}}
+  /* 가림막을 통과시켜 유튜브 플레이어를 직접 누를 수 있게 (영상은 계속 흐리게) */
+  .screen.tapallow .veil{pointer-events:none;opacity:.45}
+  .screen.tapallow .taphelp{pointer-events:none}
 
   /* ---------- answer ---------- */
   .answer{
@@ -292,7 +313,7 @@
   }
 </style>
 </head>
-<body data-mode="yt">
+<body data-mode="yt" data-build="2026-11-27b">
 
 <header class="top">
   <div class="brand">
@@ -315,6 +336,13 @@
         <div class="q">?</div>
         <div class="vtext">정답 공개 전까지 영상은 가려집니다</div>
         <div class="vbadge" id="veilBadge">곡 1</div>
+      </div>
+      <div class="taphelp" id="tapHelp" hidden role="button" tabindex="0" aria-label="재생 허용하기">
+        <div class="th-in">
+          <div class="th-ic" aria-hidden="true">▶</div>
+          <div class="th-t" id="thTitle">재생을 허용해 주세요</div>
+          <div class="th-s" id="thSub">화면 가운데를 한 번 터치하면 소리가 켜집니다</div>
+        </div>
       </div>
       <div class="hud">
         <div class="status" id="status" data-k="idle"><i></i><span>준비됨</span></div>
@@ -555,10 +583,56 @@
     return playerPromise;
   }
 
+  /* ---------- 재생 지킴이 타이머 · iOS 터치 허용 안내 ---------- */
+  var playGuard = 0, lateGuard = 0, tapGuard = 0;
+  var screenEl = $("#screen"), tapHelpEl = $("#tapHelp");
+
+  function clearPlayGuards(){
+    clearTimeout(playGuard); playGuard = 0;
+    clearTimeout(lateGuard); lateGuard = 0;
+    clearTimeout(tapGuard); tapGuard = 0;
+    clearInterval(state.adTimer); state.adTimer = 0;
+  }
+
+  /* iOS가 자동재생을 막아 5초 안에 재생이 시작되지 않을 때만 뜨는 안내 */
+  function showTapHelp(){
+    if (state.mode !== "yt") return;
+    screenEl.classList.remove("tapallow");
+    screenEl.classList.add("taphelp");
+    tapHelpEl.hidden = false;
+    setStatus("buffering", "재생 대기");
+  }
+
+  /* 가림막을 클릭을 통과시켜 유튜브 플레이어를 직접 누를 수 있게 한 상태 */
+  function endTapFlow(){
+    screenEl.classList.remove("taphelp", "tapallow");
+    tapHelpEl.hidden = true;
+  }
+
+  tapHelpEl.addEventListener("click", function(e){
+    e.preventDefault();
+    screenEl.classList.remove("taphelp");
+    screenEl.classList.add("tapallow");
+    tapHelpEl.hidden = true;
+    /* 탭(사용자 제스처) 안에서 바로 한 번 더 재생을 시도합니다. */
+    if (ytReady && yt && yt.playVideo){ try { yt.playVideo(); } catch(err){} }
+    setStatus("buffering", "화면을 터치");
+    clearTimeout(tapGuard);
+    tapGuard = setTimeout(function(){
+      if (state.phase === "buffering" || state.phase === "idle"){
+        endTapFlow();
+        setStatus("buffering", "버퍼링 중... (지연)");
+      }
+    }, 12000);
+  });
+
   function onYtState(e){
     var st = e.data;
     if (st === 1){                          // 재생 시작
-      clearTimeout(state.wd);
+      clearTimeout(playGuard); playGuard = 0;
+      clearTimeout(lateGuard); lateGuard = 0;
+      clearTimeout(tapGuard); tapGuard = 0;
+      endTapFlow();
       if (isAd(cur())){
         state.armed = state.token;           // 광고 뒤 본 영상이 시작될 때 다시 계측
         setStatus("buffering", "광고 재생 중...");
@@ -569,6 +643,9 @@
         beginMeasure(state.token);
       } else if (state.phase === "playing"){
         setStatus("playing", "재생 중");
+      } else if (state.phase === "buffering"){
+        state.armed = 0;
+        beginMeasure(state.token);
       }
     } else if (st === 3){                   // 버퍼링
       if (state.phase === "playing") setStatus("buffering", "버퍼링 중...");
@@ -593,7 +670,7 @@
     var item = cur();
     cancelAnimationFrame(state.raf); state.raf = 0;
     state.phase = "error"; state.armed = 0; state.target = 0;
-    clearTimeout(state.wd);
+    clearPlayGuards();
     setStatus("error", "재생 불가");
     renderTimer(0, 0);
     if (state.mode === "yt" && item){
@@ -617,8 +694,8 @@
   function cleanupPlayback(){
     state.token++;                    // 진행 중이던 측정/타이머 무효화
     cancelAnimationFrame(state.raf); state.raf = 0;
-    clearTimeout(state.wd); state.wd = 0;
-    clearInterval(state.adTimer); state.adTimer = 0;
+    clearPlayGuards();
+    endTapFlow();
     state.armed = 0;
     state.phase = "idle";
     state.target = 0;
@@ -674,19 +751,29 @@
     return Math.max(0, (item.start || 0) + (item.nudge || 0));
   }
 
-  function waitSeek(start, token){
-    return new Promise(function(res){
-      var tries = 0;
-      yt.seekTo(start, true);
-      (function check(){
-        if (token !== state.token) return res(false);
-        var t = 0;
-        try { t = yt.getCurrentTime() || 0; } catch(e){}
-        if (Math.abs(t - start) < 0.4 || tries > 40) return res(true);
-        tries++;
-        setTimeout(check, 60);
-      })();
-    });
+  function loadedVideoId(){
+    try { return (ytReady && yt) ? ((yt.getVideoData() || {}).video_id || "") : ""; } catch(e){ return ""; }
+  }
+
+  /* 정지 상태일 때 다음 곡을 미리 큐에 올려 둡니다.
+     미리 올려두면 곡을 바꿔도 클릭 한 번에 seekTo → playVideo만 하면 됩니다. */
+  function cueItem(item){
+    item = item || cur();
+    if (!ytReady || !yt || state.mode !== "yt" || !item || !item.yt) return;
+    var start = songStart(item);
+    if (loadedVideoId() === item.yt){
+      try { if (yt.getPlayerState() !== 1) yt.seekTo(start, true); } catch(e){}
+      return;
+    }
+    try { yt.cueVideoById({ videoId: item.yt, startSeconds: start }); } catch(e){}
+  }
+
+  /* 페이지 로드 즉시 플레이어를 만들어 두고 첫 곡을 큐에 올립니다.
+     iOS는 이렇게 미리 준비된 플레이어에서만 클릭과 같은 타이밍에 재생이 됩니다. */
+  function prewarmPlayer(){
+    ensurePlayer().then(function(){
+      if (state.mode === "yt") cueItem();
+    }).catch(function(){});
   }
 
   /* 광고 판별: 광고는 다른 영상 ID·짧은 길이로 들어옵니다 */
@@ -714,11 +801,10 @@
       if (vd.video_id !== item.yt) return;      // 아직 본 영상 미로드
 
       clearInterval(state.adTimer); state.adTimer = 0;
-      waitSeek(songStart(item), token).then(function(ok){
-        if (!ok || token !== state.token) return;
-        state.armed = token;
-        try { yt.playVideo(); } catch(e){}
-      });
+      var start = songStart(item);
+      try { yt.seekTo(start, true); } catch(e){}
+      state.armed = token;
+      try { yt.playVideo(); } catch(e){}
     }, 500);
   }
 
@@ -727,46 +813,69 @@
     if (!item) return;
     if (!item.yt){ toast("재생할 영상이 없어요", true); return; }
 
-    ensurePlayer().then(function(){
-      var token = cleanupPlayback();
-      state.target = sec;
-      state.phase = "buffering";
-      state.armed = token;
+    if (!ytReady){
+      /* 플레이어가 아직 준비 전인 경우의 폴백. 이 경로는 제스처가 유지되지 않아 iOS에서 막힐 수
+         있으므로, 막히면 5초 뒤 화면 터치 안내로 넘깁니다. */
       setStatus("buffering", "버퍼링 중...");
       renderTimer(0, sec);
+      ensurePlayer().then(function(){
+        startYt(item, sec);
+      }).catch(function(){
+        state.phase = "error";
+        setStatus("error", "플레이어 오류");
+        toast("유튜브 플레이어를 불러오지 못했어요 · 인터넷 연결을 확인해 주세요", true);
+      });
+      return;
+    }
+    startYt(item, sec);
+  }
 
-      var start = songStart(item);
-      var loaded = "";
-      try { loaded = (yt.getVideoData() || {}).video_id || ""; } catch(e){}
+  function startYt(item, sec){
+    var token = cleanupPlayback();
+    state.target = sec;
+    state.phase = "buffering";
+    state.armed = token;
+    setStatus("buffering", "버퍼링 중...");
+    renderTimer(0, sec);
 
-      var begin = function(){
-        waitSeek(start, token).then(function(ok){
-          if (!ok || token !== state.token) return;
-          try { yt.playVideo(); } catch(e){}
-        });
-      };
+    var start = songStart(item);
+    var same = loadedVideoId() === item.yt;
 
-      if (loaded !== item.yt){
-        try { yt.loadVideoById({ videoId: item.yt, startSeconds: start }); } catch(e){ begin(); }
+    /* ★ 핵심: 클릭(터치) 이벤트와 같은 동기 실행 안에서 재생을 시작해야
+       iOS Safari가 사용자 제스처로 인정해서 자동재생을 막지 않습니다.
+       그래서 여기서는 Promise나 setTimeout으로 미루지 않습니다. */
+    try{
+      if (same){
+        yt.seekTo(start, true);
+        yt.playVideo();
       } else {
-        try { yt.seekTo(start, true); } catch(e){}
-        begin();
+        yt.loadVideoById({ videoId: item.yt, startSeconds: start });
       }
+    }catch(e){
+      try { yt.loadVideoById({ videoId: item.yt, startSeconds: start }); } catch(e2){}
+    }
 
-      state.wd = setTimeout(function(){
-        if (token === state.token && state.phase === "buffering"){
-          setStatus("buffering", "버퍼링 중... (지연)");
-        }
-      }, 8000);
+    lateGuard = setTimeout(function(){
+      if (token === state.token && state.phase === "buffering" && !isAd(item)){
+        setStatus("buffering", "버퍼링 중... (지연)");
+      }
+    }, 8000);
 
-      adWatch(token, item);
+    /* 5초 안에 재생이 시작되지 않으면(광고 중이면 조금 더 기다림) 터치 안내를 띄웁니다. */
+    var guard = function(ms){
+      playGuard = setTimeout(function(){
+        if (token !== state.token) return;
+        if (state.phase !== "buffering" && state.phase !== "idle") return;
+        if (isAd(item)){ guard(4000); return; }
+        showTapHelp();
+      }, ms);
+    };
+    guard(5000);
 
-      setTimeout(function(){ if (token === state.token) refreshMeta(item); }, 900);
-      setTimeout(function(){ if (token === state.token) refreshMeta(item); }, 2400);
-    }).catch(function(){
-      setStatus("error", "플레이어 오류");
-      toast("유튜브 플레이어를 불러오지 못했어요 · 인터넷 연결을 확인해 주세요", true);
-    });
+    adWatch(token, item);
+
+    setTimeout(function(){ if (token === state.token) refreshMeta(item); }, 900);
+    setTimeout(function(){ if (token === state.token) refreshMeta(item); }, 2400);
   }
 
   function refreshMeta(item){
@@ -856,17 +965,16 @@
   function loadCurrent(){
     var item = cur();
     if (state.mode === "yt" && item && item.yt){
-      ensurePlayer().then(function(){
-        var start = songStart(item);
-        var loaded = "";
-        try { loaded = (yt.getVideoData() || {}).video_id || ""; } catch(e){}
-        if (loaded !== item.yt){
-          try { yt.cueVideoById({ videoId: item.yt, startSeconds: start }); } catch(e){}
-        } else {
-          try { yt.seekTo(start, true); } catch(e){}
-        }
+      if (ytReady){
+        cueItem(item);
         setTimeout(function(){ if (cur() === item) refreshMeta(item); }, 700);
-      }).catch(function(){});
+      } else {
+        ensurePlayer().then(function(){
+          if (cur() !== item) return;
+          cueItem(item);
+          setTimeout(function(){ if (cur() === item) refreshMeta(item); }, 700);
+        }).catch(function(){});
+      }
     }
     if (state.mode === "local" && item && item.url){
       if (audio.getAttribute("src") !== item.url){
@@ -1136,13 +1244,8 @@
       cleanupPlayback();
       $("#startVal").textContent = songStart(item).toFixed(1) + "s";
       ensurePlayer().then(function(){
-        var loaded = "";
-        try { loaded = (yt.getVideoData() || {}).video_id || ""; } catch(e){}
-        if (loaded !== item.yt){
-          try { yt.cueVideoById({ videoId: item.yt, startSeconds: songStart(item) }); } catch(e){}
-        } else {
-          try { yt.seekTo(songStart(item), true); } catch(e){}
-        }
+        if (cur() !== item) return;
+        cueItem(item);
       }).catch(function(){});
     });
   });
@@ -1285,6 +1388,7 @@
   renderAll();
   setStatus("idle", "준비됨");
   renderTimer(0, 0);
+  prewarmPlayer();       /* 페이지 로드 즉시 플레이어 생성 + 첫 곡 cue */
   loadCurrent();
 })();
 </script>
