@@ -437,6 +437,7 @@
     token: 0,
     raf: 0,
     wd: 0,
+    adTimer: 0,
     armed: 0,
     startVT: 0,
     startWall: 0,
@@ -543,6 +544,11 @@
     var st = e.data;
     if (st === 1){                          // 재생 시작
       clearTimeout(state.wd);
+      if (isAd(cur())){
+        state.armed = state.token;           // 광고 뒤 본 영상이 시작될 때 다시 계측
+        setStatus("buffering", "광고 재생 중...");
+        return;
+      }
       if (state.armed === state.token){
         state.armed = 0;
         beginMeasure(state.token);
@@ -597,6 +603,7 @@
     state.token++;                    // 진행 중이던 측정/타이머 무효화
     cancelAnimationFrame(state.raf); state.raf = 0;
     clearTimeout(state.wd); state.wd = 0;
+    clearInterval(state.adTimer); state.adTimer = 0;
     state.armed = 0;
     state.phase = "idle";
     state.target = 0;
@@ -667,6 +674,39 @@
     });
   }
 
+  /* 광고 판별: 광고는 다른 영상 ID·짧은 길이로 들어옵니다 */
+  function isAd(item){
+    try{
+      var vd = (ytReady && yt) ? (yt.getVideoData() || {}) : {};
+      var d = (ytReady && yt) ? (yt.getDuration() || 0) : 0;
+      if (vd.video_id && item && item.yt && vd.video_id !== item.yt) return true;
+      if (d > 0 && d < 45) return true;
+      return false;
+    }catch(e){ return false; }
+  }
+
+  function adWatch(token, item){
+    clearInterval(state.adTimer);
+    state.adTimer = setInterval(function(){
+      if (token !== state.token || state.phase === "idle" || state.phase === "stopped" || state.phase === "error"){
+        clearInterval(state.adTimer); state.adTimer = 0; return;
+      }
+      if (state.phase === "playing"){ clearInterval(state.adTimer); state.adTimer = 0; return; }
+      if (isAd(item)) return;
+
+      var vd = {};
+      try { vd = yt.getVideoData() || {}; } catch(e){}
+      if (vd.video_id !== item.yt) return;      // 아직 본 영상 미로드
+
+      clearInterval(state.adTimer); state.adTimer = 0;
+      waitSeek(songStart(item), token).then(function(ok){
+        if (!ok || token !== state.token) return;
+        state.armed = token;
+        try { yt.playVideo(); } catch(e){}
+      });
+    }, 500);
+  }
+
   function playYt(sec){
     var item = cur();
     if (!item) return;
@@ -703,6 +743,8 @@
           setStatus("buffering", "버퍼링 중... (지연)");
         }
       }, 8000);
+
+      adWatch(token, item);
 
       setTimeout(function(){ if (token === state.token) refreshMeta(item); }, 900);
       setTimeout(function(){ if (token === state.token) refreshMeta(item); }, 2400);
