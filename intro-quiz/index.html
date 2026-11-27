@@ -59,6 +59,15 @@
     padding:0 clamp(14px,3vw,32px) 28px;align-items:start;
   }
   .stage-col{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .stage-col > .answer,
+  .stage-col > .play-row,
+  .stage-col > .tools-row,
+  .stage-col > .nudge,
+  .stage-col > .keys{
+    width:100%;
+    max-width:min(100%, max(320px, calc(177.78vh - 768px)));
+    margin-inline:auto;
+  }
   .side{display:flex;flex-direction:column;gap:12px;min-width:0}
 
   /* ---------- screen ---------- */
