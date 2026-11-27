@@ -163,6 +163,7 @@
 
   /* ---------- potential ---------- */
   .potrow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .potrow[hidden]{display:none}
   .pot{
     display:inline-flex;align-items:baseline;gap:4px;font-size:13.5px;font-weight:800;
     padding:7px 13px;border-radius:999px;color:#e8fff7;
@@ -391,7 +392,7 @@
   <div class="dots" id="dots" aria-hidden="true"></div>
 
   <div class="screen" id="screen">
-    <div class="yt-host"><div id="ytFrame"></div></div>
+    <div class="yt-host" aria-hidden="true"><div id="ytFrame"></div></div>
     <div class="eq" id="eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <div class="veil" id="veil">
       <div class="q">?</div>
@@ -412,7 +413,7 @@
     <div class="progresswrap"><div class="progress" id="progress"></div></div>
   </div>
 
-  <div class="potrow">
+  <div class="potrow" id="potRow">
     <div class="pot" id="potBadge">지금 맞히면 <b>+5</b>점</div>
     <div class="heard" id="heardInfo">아직 안 들었어요</div>
   </div>
@@ -1067,6 +1068,7 @@
   var answerInput = $("#answerInput");
   var feedbackEl = $("#feedback");
   var dotsEl = $("#dots");
+  var potRow = $("#potRow");
   var potBadge = $("#potBadge");
   var heardInfo = $("#heardInfo");
 
@@ -1116,9 +1118,11 @@
     cleanupPlayback();
     endCard.hidden = true;
     playArea.hidden = false;
+    potRow.hidden = false;
     screenEl.classList.remove("revealed");
     answerInput.value = "";
     answerInput.classList.remove("bad");
+    answerInput.blur();
     feedback("");
     renderRoundHUD();
     loadCurrent();
@@ -1145,6 +1149,7 @@
     g.correct++;
     if (r.heard === 1 && r.hints === 0) g.oneSec++;
     g.rows.push({ title:item.title, artist:item.artist, pts:pts, correct:true, heard:r.heard, hints:r.hints });
+    answerInput.blur();
     cleanupPlayback();
     showEnd(true, pts);
   }
@@ -1157,6 +1162,7 @@
     r.gaveup = true;
     r.points = 0;
     g.rows.push({ title:item.title, artist:item.artist, pts:0, correct:false, gaveup:true });
+    answerInput.blur();
     cleanupPlayback();
     showEnd(false, 0);
     /* 정답을 잠깐 보여준 뒤 다음 곡으로 */
@@ -1168,6 +1174,7 @@
   function showEnd(ok, pts){
     var g = state.game, r = g.round, item = cur();
     playArea.hidden = true;
+    potRow.hidden = true;
     endCard.hidden = false;
     endCard.classList.toggle("miss", !ok);
     $("#endVerdict").textContent = ok ? "정답!" : "포기 · 0점";
@@ -1191,6 +1198,7 @@
     cleanupPlayback();
     endCard.hidden = true;
     playArea.hidden = false;
+    potRow.hidden = false;
     var pct = g.max ? Math.round((g.score / g.max) * 100) : 0;
     $("#rTotal").textContent = g.score;
     $("#rMax").textContent = g.max;
@@ -1225,7 +1233,11 @@
     cleanupPlayback();
     endCard.hidden = true;
     playArea.hidden = false;
+    potRow.hidden = false;
     screenEl.classList.remove("revealed");
+    answerInput.value = "";
+    answerInput.classList.remove("bad");
+    feedback("");
     renderRoundHUD();
   }
 
