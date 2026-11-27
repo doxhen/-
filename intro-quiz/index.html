@@ -1,0 +1,1230 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07090f">
+<title>1초 전주 맞추기 · 동아리 발표회</title>
+<style>
+  :root{
+    --bg:#07090f; --panel:#0f131c; --panel2:#141a27; --line:#232b3d;
+    --txt:#eef2ff; --muted:#8a93a8; --neon:#7c5cff; --cyan:#22d3ee;
+    --pink:#ff4d8d; --ok:#34d399; --warn:#fbbf24;
+    --r:16px;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--txt);
+    font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(900px 520px at 12% -10%, rgba(124,92,255,.22), transparent 60%),
+      radial-gradient(760px 460px at 92% 0%, rgba(34,211,238,.13), transparent 62%),
+      radial-gradient(700px 500px at 50% 120%, rgba(255,77,141,.10), transparent 60%);
+    background-attachment:fixed;
+  }
+  button{font:inherit;color:inherit;cursor:pointer}
+  input{font:inherit}
+  kbd{
+    font:inherit;font-size:11px;padding:1px 5px;border-radius:5px;
+    background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);color:#cdd4e6;
+  }
+
+  /* ---------- header ---------- */
+  .top{
+    display:flex;align-items:center;gap:18px;justify-content:space-between;
+    padding:18px clamp(14px,3vw,32px) 12px;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .brand .dot{
+    width:11px;height:11px;border-radius:50%;
+    background:var(--neon);box-shadow:0 0 0 4px rgba(124,92,255,.18),0 0 18px var(--neon);
+    flex:none;
+  }
+  .brand h1{font-size:clamp(18px,2.2vw,24px);margin:0;letter-spacing:-.02em;white-space:nowrap}
+  .brand .sub{font-size:12px;color:var(--muted);padding-left:4px;white-space:nowrap}
+  .modes{display:flex;gap:6px;background:rgba(255,255,255,.04);padding:5px;border-radius:12px;border:1px solid var(--line)}
+  .mode-btn{
+    border:0;background:transparent;color:var(--muted);padding:8px 14px;border-radius:9px;
+    font-size:13px;font-weight:600;transition:.16s;white-space:nowrap;
+  }
+  .mode-btn.active{background:linear-gradient(180deg,rgba(124,92,255,.9),rgba(124,92,255,.65));color:#fff;box-shadow:0 6px 18px rgba(124,92,255,.35)}
+  .mode-btn:not(.active):hover{color:#dfe5f5;background:rgba(255,255,255,.05)}
+
+  /* ---------- layout ---------- */
+  .wrap{
+    display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;
+    padding:0 clamp(14px,3vw,32px) 28px;align-items:start;
+  }
+  .stage-col{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .side{display:flex;flex-direction:column;gap:12px;min-width:0}
+
+  /* ---------- screen ---------- */
+  .screen{
+    position:relative;aspect-ratio:16/9;width:100%;
+    background:#05070c;border:1px solid var(--line);border-radius:20px;overflow:hidden;
+    box-shadow:0 26px 70px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.04);
+    isolation:isolate;
+  }
+  #ytFrame{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+  #ytFrame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .screen .yt-host{position:absolute;inset:0;transition:filter .35s ease, transform .35s ease;filter:blur(26px) saturate(.55) brightness(.45);transform:scale(1.08)}
+  .screen.revealed .yt-host{filter:none;transform:scale(1)}
+  .veil{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    background:radial-gradient(circle at 50% 45%, rgba(15,19,28,.86), rgba(5,7,12,.97) 70%);
+    transition:opacity .3s ease, visibility .3s;
+    text-align:center;padding:16px;
+  }
+  .screen.revealed .veil{opacity:0;visibility:hidden;pointer-events:none}
+  .veil .q{
+    font-size:clamp(46px,9vw,96px);font-weight:800;letter-spacing:-.04em;line-height:1;
+    background:linear-gradient(180deg,#fff,#9d8bff);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 26px rgba(124,92,255,.45));
+  }
+  .veil .vtext{font-size:13px;color:var(--muted)}
+  .veil .vbadge{
+    margin-top:6px;font-size:12px;font-weight:700;color:#d9d2ff;
+    background:rgba(124,92,255,.16);border:1px solid rgba(124,92,255,.42);
+    padding:4px 10px;border-radius:999px;
+  }
+  /* local mode visual */
+  .eq{display:none;position:absolute;inset:0;align-items:center;justify-content:center;gap:6px;background:linear-gradient(180deg,#080b12,#0b1018)}
+  .eq i{display:block;width:9px;height:24px;border-radius:6px;background:linear-gradient(180deg,var(--cyan),var(--neon));opacity:.85}
+  .eq.on i{animation:bar .9s ease-in-out infinite}
+  .eq i:nth-child(2){animation-delay:.12s} .eq i:nth-child(3){animation-delay:.24s}
+  .eq i:nth-child(4){animation-delay:.36s} .eq i:nth-child(5){animation-delay:.48s}
+  .eq i:nth-child(6){animation-delay:.6s}  .eq i:nth-child(7){animation-delay:.72s}
+  @keyframes bar{0%,100%{height:16px;opacity:.5}50%{height:64px;opacity:1}}
+  body[data-mode="local"] .yt-host{display:none}
+  body[data-mode="local"] .eq{display:flex}
+
+  .hud{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:14px 16px;pointer-events:none}
+  .status{
+    display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;
+    background:rgba(9,12,19,.78);border:1px solid var(--line);border-radius:999px;padding:7px 12px;
+    color:#cfd6e8;backdrop-filter:blur(8px);
+  }
+  .status i{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none;transition:.2s}
+  .status[data-k="buffering"] i{background:var(--warn);animation:pulse 1s infinite}
+  .status[data-k="playing"] i{background:var(--ok);box-shadow:0 0 10px var(--ok);animation:pulse 1.2s infinite}
+  .status[data-k="stopped"] i{background:var(--cyan)}
+  .status[data-k="error"] i{background:var(--pink)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .count{
+    font-size:clamp(34px,5.4vw,64px);font-weight:800;letter-spacing:-.03em;line-height:.9;
+    font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.6);
+    transition:color .2s;
+  }
+  .count span{font-size:.34em;font-weight:700;color:var(--muted);margin-left:3px}
+  .count.live{color:var(--cyan)}
+  .progresswrap{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.06)}
+  .progress{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--neon));transition:width .06s linear}
+
+  /* ---------- answer ---------- */
+  .answer{
+    background:linear-gradient(180deg,rgba(20,26,39,.9),rgba(15,19,28,.9));
+    border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;
+    display:flex;flex-direction:column;gap:3px;min-height:86px;justify-content:center;
+  }
+  .answer .label{font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--muted)}
+  .answer .title{font-size:clamp(20px,2.6vw,28px);font-weight:800;letter-spacing:-.02em;line-height:1.25;word-break:keep-all}
+  .answer .artist{font-size:14px;color:var(--muted);font-weight:600}
+  .answer.revealed .title{color:#fff}
+  .answer .title.hidden{color:#4b5468;letter-spacing:.18em}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;min-height:0}
+  .chip{
+    font-size:12.5px;font-weight:700;color:#cfd7ff;background:rgba(124,92,255,.14);
+    border:1px solid rgba(124,92,255,.38);padding:4px 10px;border-radius:999px;
+  }
+  .chip[hidden]{display:none}
+
+  /* ---------- controls ---------- */
+  .play-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  .btn{
+    border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:14px;
+    padding:14px 10px;font-size:15px;font-weight:700;transition:.15s;color:#e7ecfa;
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;
+  }
+  .btn:hover{background:rgba(255,255,255,.08);border-color:#313c55}
+  .btn:active{transform:translateY(1px) scale(.995)}
+  .play-row .btn{
+    height:66px;font-size:16px;
+    background:linear-gradient(180deg,rgba(124,92,255,.26),rgba(124,92,255,.08));
+    border-color:rgba(124,92,255,.5);
+    box-shadow:0 10px 26px -12px rgba(124,92,255,.9);
+  }
+  .play-row .btn:hover{background:linear-gradient(180deg,rgba(124,92,255,.4),rgba(124,92,255,.16));border-color:rgba(160,134,255,.75)}
+  .play-row .btn b{font-size:22px;font-weight:800;letter-spacing:-.02em}
+  .play-row .btn.full{background:linear-gradient(180deg,rgba(34,211,238,.16),rgba(34,211,238,.05));border-color:rgba(34,211,238,.42);box-shadow:none}
+  .play-row .btn.full:hover{background:linear-gradient(180deg,rgba(34,211,238,.26),rgba(34,211,238,.1))}
+
+  .tools-row{display:flex;gap:8px;flex-wrap:wrap}
+  .tools-row .btn{flex:1 1 auto;min-width:104px;padding:11px 12px;font-size:13.5px;font-weight:600;color:#cfd6e8}
+  .tools-row .btn:hover{color:#fff}
+  .tools-row .btn.primary{border-color:rgba(124,92,255,.55);background:rgba(124,92,255,.16);color:#fff}
+  .tools-row .btn.primary:hover{background:rgba(124,92,255,.26)}
+
+  .nudge{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);padding:0 2px}
+  .nudge b{color:#c9d2e8;font-variant-numeric:tabular-nums}
+  .nudge button{
+    border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:8px;
+    padding:3px 8px;font-size:11.5px;color:#b9c2d6;
+  }
+  .nudge button:hover{background:rgba(255,255,255,.08);color:#fff}
+  .nudge .tip{margin-left:auto;opacity:.75}
+
+  /* ---------- sidebar cards ---------- */
+  .card{background:linear-gradient(180deg,rgba(20,26,39,.86),rgba(15,19,28,.92));border:1px solid var(--line);border-radius:var(--r);padding:13px 14px}
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+  .card-head h2{font-size:13px;margin:0;letter-spacing:.02em;color:#dfe5f5;font-weight:700}
+  .card-head h2 span{color:var(--muted);font-weight:600;margin-left:4px}
+  .ghost{border:0;background:transparent;color:var(--muted);font-size:12px;padding:4px 6px;border-radius:8px}
+  .ghost:hover{background:rgba(255,255,255,.07);color:#fff}
+
+  .score-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:210px;overflow:auto}
+  .score-row{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:5px 6px 5px 9px}
+  .score-row input{
+    flex:1;min-width:0;background:transparent;border:0;color:#e8edfa;font-size:13.5px;font-weight:700;
+    padding:3px 0;outline:none;border-bottom:1px dashed transparent;
+  }
+  .score-row input:focus{border-bottom-color:rgba(124,92,255,.7)}
+  .score-row .val{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;min-width:26px;text-align:right;color:#fff}
+  .score-row .plus{border:1px solid rgba(52,211,153,.5);background:rgba(52,211,153,.14);color:#c9ffe9;border-radius:8px;font-size:12.5px;font-weight:800;padding:4px 9px}
+  .score-row .plus:hover{background:rgba(52,211,153,.28)}
+  .score-row .minus{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;font-size:12px;padding:4px 7px}
+  .score-row .minus:hover{color:#fff}
+  .score-row .del{border:0;background:transparent;color:#5d6679;font-size:14px;padding:2px 4px;border-radius:6px}
+  .score-row .del:hover{color:var(--pink);background:rgba(255,77,141,.12)}
+  .score-add{display:flex;gap:6px;margin-top:8px}
+  .score-add input{
+    flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:9px;
+    padding:8px 10px;font-size:12.5px;color:#e8edfa;outline:none;
+  }
+  .score-add input:focus{border-color:rgba(124,92,255,.6)}
+  .score-add button{border:1px solid rgba(124,92,255,.5);background:rgba(124,92,255,.18);border-radius:9px;padding:8px 11px;font-size:12.5px;font-weight:700}
+
+  .queue{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;max-height:min(38vh,360px);overflow:auto}
+  .queue li{
+    display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:9px;font-size:13px;color:#aab3c7;
+    border:1px solid transparent;
+  }
+  .queue li .idx{
+    width:22px;height:22px;flex:none;border-radius:7px;background:rgba(255,255,255,.05);
+    display:grid;place-items:center;font-size:11px;font-weight:700;color:#8f98ad;font-variant-numeric:tabular-nums;
+  }
+  .queue li .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .queue li .flag{font-size:10.5px;font-weight:700;color:var(--ok);opacity:0}
+  .queue li.done .flag{opacity:1}
+  .queue li.cur{background:rgba(124,92,255,.16);border-color:rgba(124,92,255,.45);color:#fff}
+  .queue li.cur .idx{background:rgba(124,92,255,.5);color:#fff}
+  .queue li.err{opacity:.45}
+  .queue li.err .nm{text-decoration:line-through}
+  .queue li button.sel{all:unset;display:flex;align-items:center;gap:9px;width:100%;cursor:pointer}
+
+  .add-yt{display:flex;gap:6px;margin-top:10px}
+  .add-yt input{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:12.5px;color:#e8edfa;outline:none}
+  .add-yt input:focus{border-color:rgba(124,92,255,.6)}
+  .add-yt button{border:1px solid rgba(124,92,255,.5);background:rgba(124,92,255,.18);border-radius:9px;padding:8px 12px;font-size:12.5px;font-weight:700;white-space:nowrap}
+
+  .file-drop{margin-top:8px;text-align:center}
+  .file-drop .dropbtn{
+    width:100%;border:1px dashed rgba(124,92,255,.45);background:rgba(124,92,255,.1);border-radius:11px;
+    padding:14px;font-size:13.5px;font-weight:700;color:#dcd6ff;
+  }
+  .file-drop .dropbtn:hover{background:rgba(124,92,255,.18)}
+  .file-drop p{margin:8px 0 0;font-size:11.5px;color:var(--muted);line-height:1.5}
+  .file-drop.over .dropbtn{border-color:var(--cyan);background:rgba(34,211,238,.12);color:#fff}
+  .file-drop .row2{display:flex;gap:6px;margin-top:8px}
+  .file-drop .row2 button{flex:1;border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:9px;padding:8px;font-size:12px;color:#c3ccdf}
+  .file-drop .row2 button:hover{background:rgba(255,255,255,.08);color:#fff}
+
+  .note{margin:0;font-size:11.5px;line-height:1.6;color:#6f788c;padding:0 3px}
+  .keys{margin:2px 0 0;font-size:11.5px;color:#6f788c;display:flex;gap:10px;flex-wrap:wrap}
+  .keys span{display:inline-flex;align-items:center;gap:4px}
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,18px);
+    background:rgba(15,19,28,.97);border:1px solid var(--line);color:#e9eefc;
+    padding:11px 16px;border-radius:12px;font-size:13px;font-weight:600;
+    box-shadow:0 20px 50px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.22s;z-index:60;max-width:min(92vw,560px);text-align:center;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .toast.bad{border-color:rgba(255,77,141,.5)}
+
+  @media (max-width:1080px){
+    .wrap{grid-template-columns:minmax(0,1fr)}
+    .queue{max-height:230px}
+  }
+  @media (max-width:640px){
+    .top{padding:14px 14px 10px;gap:10px}
+    .brand .sub{display:none}
+    .play-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .play-row .btn{height:58px}
+    .tools-row .btn{min-width:calc(50% - 4px);flex:1 1 calc(50% - 4px);font-size:12.5px}
+    .nudge .tip{display:none}
+    .hud{padding:10px 12px}
+    .count{font-size:38px}
+    .status{font-size:11px;padding:6px 10px}
+    .screen{border-radius:16px}
+    .answer{min-height:78px;padding:12px 13px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+  }
+</style>
+</head>
+<body data-mode="yt">
+
+<header class="top">
+  <div class="brand">
+    <span class="dot"></span>
+    <h1>1초 전주 맞추기</h1>
+    <span class="sub">동아리 발표회</span>
+  </div>
+  <nav class="modes" aria-label="모드 선택">
+    <button class="mode-btn active" data-mode="yt">프리셋 20곡</button>
+    <button class="mode-btn" data-mode="local">내 음원 파일</button>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="stage-col">
+    <div class="screen" id="screen">
+      <div class="yt-host"><div id="ytFrame"></div></div>
+      <div class="eq" id="eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="veil" id="veil">
+        <div class="q">?</div>
+        <div class="vtext">정답 공개 전까지 영상은 가려집니다</div>
+        <div class="vbadge" id="veilBadge">곡 1</div>
+      </div>
+      <div class="hud">
+        <div class="status" id="status" data-k="idle"><i></i><span>준비됨</span></div>
+        <div class="count" id="count">0.0<span>s</span></div>
+      </div>
+      <div class="progresswrap"><div class="progress" id="progress"></div></div>
+    </div>
+
+    <div class="answer" id="answer">
+      <div class="label">정답</div>
+      <div class="title hidden" id="ansTitle">???</div>
+      <div class="artist" id="ansArtist">정답 공개를 눌러 확인하세요</div>
+      <div class="chips">
+        <span class="chip" id="chipArtist" hidden></span>
+        <span class="chip" id="chipCho" hidden></span>
+      </div>
+    </div>
+
+    <div class="play-row">
+      <button class="btn play" data-sec="1"><b>1</b>초 듣기</button>
+      <button class="btn play" data-sec="3"><b>3</b>초 듣기</button>
+      <button class="btn play" data-sec="5"><b>5</b>초 듣기</button>
+      <button class="btn play full" data-sec="0">전체 듣기</button>
+    </div>
+
+    <div class="tools-row">
+      <button class="btn" id="btnHint">힌트</button>
+      <button class="btn primary" id="btnReveal">정답 공개 <kbd>Space</kbd></button>
+      <button class="btn" id="btnNext">다음 곡 <kbd>→</kbd></button>
+      <button class="btn" id="btnShuffle">곡 섞기</button>
+      <button class="btn" id="btnStop">정지</button>
+    </div>
+
+    <div class="nudge">
+      <span>시작 지점 <b id="startVal">0.0s</b></span>
+      <button data-nudge="-1" title="시작 지점 1초 앞으로">−1초</button>
+      <button data-nudge="1" title="시작 지점 1초 뒤로">+1초</button>
+      <span class="tip">영상 앞부분이 무음이면 조정하세요</span>
+    </div>
+
+    <p class="keys">
+      <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 듣기</span>
+      <span><kbd>Space</kbd> 정답</span>
+      <span><kbd>→</kbd> 다음 곡</span>
+      <span><kbd>H</kbd> 힌트</span>
+      <span><kbd>S</kbd> 섞기</span>
+    </p>
+  </section>
+
+  <aside class="side">
+    <div class="card">
+      <div class="card-head">
+        <h2>점수판</h2>
+        <button class="ghost" id="btnScoreReset">초기화</button>
+      </div>
+      <ul class="score-list" id="scoreList"></ul>
+      <form class="score-add" id="scoreAdd" autocomplete="off">
+        <input id="scoreName" maxlength="14" placeholder="팀 · 이름 추가">
+        <button type="submit">추가</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2 id="queueTitle">곡 목록 <span id="queueCount">0</span></h2>
+        <span class="ghost" id="queueNow">—</span>
+      </div>
+      <ol class="queue" id="queue"></ol>
+
+      <form class="add-yt" id="addYt">
+        <input id="ytUrl" placeholder="유튜브 링크 붙여넣기" autocomplete="off">
+        <button type="submit">추가</button>
+      </form>
+
+      <div class="file-drop" id="fileDrop" hidden>
+        <input type="file" id="fileInput" accept="audio/*,.mp3,.m4a,.wav,.ogg,.flac" multiple hidden>
+        <button class="dropbtn" id="filePick" type="button">음원 파일 선택</button>
+        <p>여러 파일을 한 번에 올리거나 이 영역에 끌어다 놓으세요.<br>파일명이 그대로 정답이 됩니다 (MP3 · M4A · WAV)</p>
+        <div class="row2">
+          <button type="button" id="fileClear">목록 비우기</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="note">광고 없이 쓰려면 노트북에 유튜브 프리미엄 로그인을 권장합니다. (광고가 나오면 타이머가 어긋날 수 있어요)</p>
+  </aside>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<audio id="audio" preload="auto"></audio>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- 진단(콘솔 에러 수집) ---------- */
+  window.__iqErrors = [];
+  window.addEventListener("error", function(e){ window.__iqErrors.push(String((e && e.message) || e)); });
+  window.addEventListener("unhandledrejection", function(e){ window.__iqErrors.push("promise: " + String(e && e.reason)); });
+
+  var $ = function(s, r){ return (r || document).querySelector(s); };
+  var $$ = function(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------- 데이터 ---------- */
+  var PRESETS = [
+    { title:"Supernova", artist:"aespa", yt:"phuiiNCxRMg" },
+    { title:"Ditto", artist:"NewJeans", yt:"pSUydWEqKwE" },
+    { title:"한 페이지가 될 수 있게", artist:"DAY6", yt:"vnS_jn2uibs" },
+    { title:"내 이름 맑음", artist:"QWER", yt:"AlirzLFEHUI" },
+    { title:"APT.", artist:"로제 & 브루노 마스", yt:"ekr2nIex040" },
+    { title:"POWER", artist:"지드래곤", yt:"NMjhjrBIrG8" },
+    { title:"해야 (HEYA)", artist:"IVE", yt:"07EzMbVH3QE" },
+    { title:"손오공", artist:"세븐틴", yt:"-GQg25oP0S4" },
+    { title:"사건의 지평선", artist:"윤하", yt:"BBdC1rl5sKY" },
+    { title:"주저하는 연인들을 위해", artist:"잔나비", yt:"GpQ222I1ULc" },
+    { title:"Love Lee", artist:"악뮤", yt:"EIz09kLzN9k" },
+    { title:"EASY", artist:"르세라핌", yt:"bNKXxwOQYB8" },
+    { title:"봄여름가을겨울", artist:"빅뱅", yt:"eN5mG_yMDiM" },
+    { title:"좋은 날", artist:"아이유", yt:"jeqdYqsrsA0" },
+    { title:"Super Lady", artist:"(여자)아이들", yt:"6f3RzjXPQwA" },
+    { title:"첫 만남은 계획대로 되지 않아", artist:"투어스", yt:"hVAc1Vf2ITU" },
+    { title:"Magnetic", artist:"아일릿", yt:"Vk5-c_v4gMU" },
+    { title:"Love 119", artist:"라이즈", yt:"0TAAUWHo4Ec" },
+    { title:"강남스타일", artist:"싸이", yt:"9bZkp7q19f0" },
+    { title:"Gee", artist:"소녀시대", yt:"U7mPqycQ0tQ" }
+  ];
+
+  var state = {
+    mode: "yt",
+    ytItems: [],
+    localItems: [],
+    cur: 0,
+    phase: "idle",     // idle | buffering | playing | stopped | error
+    target: 0,         // 0 = full
+    token: 0,
+    raf: 0,
+    wd: 0,
+    armed: 0,
+    startVT: 0,
+    startWall: 0,
+    revealed: false,
+    hint: 0,
+    scores: []
+  };
+
+  function list(){ return state.mode === "yt" ? state.ytItems : state.localItems; }
+  function cur(){ return list()[state.cur] || null; }
+
+  function buildPresets(){
+    state.ytItems = PRESETS.map(function(p, i){
+      return { kind:"yt", title:p.title, artist:p.artist, yt:p.yt, start:0, nudge:0, revealed:false, err:false, n:i };
+    });
+  }
+
+  /* ---------- 상태 표시 ---------- */
+  var statusEl = $("#status");
+  var STATUS_TEXT = { idle:"준비됨", buffering:"버퍼링 중...", playing:"재생 중", stopped:"정지", error:"재생 오류" };
+  function setStatus(kind, text){
+    statusEl.dataset.k = kind;
+    statusEl.lastElementChild.textContent = text || STATUS_TEXT[kind] || "";
+  }
+
+  var toastTimer = 0;
+  function toast(msg, bad){
+    var t = $("#toast");
+    t.textContent = msg;
+    t.classList.toggle("bad", !!bad);
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2600);
+  }
+
+  /* ---------- 타이머 표시 ---------- */
+  var countEl = $("#count");
+  var progressEl = $("#progress");
+  function renderTimer(elapsed, target){
+    var live = state.phase === "playing";
+    countEl.classList.toggle("live", live);
+    if (target > 0){
+      var left = Math.max(0, target - elapsed);
+      countEl.firstChild.nodeValue = left.toFixed(1);
+      progressEl.style.width = Math.min(100, (elapsed / target) * 100) + "%";
+    } else {
+      countEl.firstChild.nodeValue = elapsed.toFixed(1);
+      progressEl.style.width = live ? "100%" : "0%";
+      progressEl.style.opacity = live ? ".55" : "1";
+    }
+  }
+
+  /* ---------- 유튜브 ---------- */
+  var yt = null, ytReady = false, apiPromise = null, playerPromise = null;
+
+  function loadApi(){
+    if (apiPromise) return apiPromise;
+    apiPromise = new Promise(function(res, rej){
+      if (window.YT && window.YT.Player) return res();
+      var done = false;
+      window.onYouTubeIframeAPIReady = function(){ done = true; res(); };
+      var s = document.createElement("script");
+      s.src = "https://www.youtube.com/iframe_api";
+      s.async = true;
+      s.onerror = function(){ if(!done) rej(new Error("api")); };
+      document.head.appendChild(s);
+      setTimeout(function(){ if(!done) rej(new Error("timeout")); }, 15000);
+    });
+    return apiPromise;
+  }
+
+  function ensurePlayer(){
+    if (playerPromise) return playerPromise;
+    playerPromise = loadApi().then(function(){
+      return new Promise(function(res, rej){
+        try{
+          yt = new YT.Player("ytFrame", {
+            width: "100%", height: "100%",
+            playerVars: {
+              autoplay: 0, controls: 0, disablekb: 1, modestbranding: 1,
+              rel: 0, playsinline: 1, iv_load_policy: 3, fs: 0,
+              origin: location.origin
+            },
+            events: {
+              onReady: function(){
+                ytReady = true;
+                try { yt.setVolume(100); } catch(e){}
+                res();
+              },
+              onStateChange: onYtState,
+              onError: onYtError
+            }
+          });
+        }catch(e){ rej(e); }
+      });
+    }).catch(function(e){
+      playerPromise = null;
+      throw e;
+    });
+    return playerPromise;
+  }
+
+  function onYtState(e){
+    var st = e.data;
+    if (st === 1){                          // 재생 시작
+      clearTimeout(state.wd);
+      if (state.armed === state.token){
+        state.armed = 0;
+        beginMeasure(state.token);
+      } else if (state.phase === "playing"){
+        setStatus("playing", "재생 중");
+      }
+    } else if (st === 3){                   // 버퍼링
+      if (state.phase === "playing") setStatus("buffering", "버퍼링 중...");
+    } else if (st === 2){                   // 일시정지
+      if (state.phase === "playing"){
+        cancelAnimationFrame(state.raf); state.raf = 0;
+        state.phase = "stopped";
+        setStatus("stopped", "정지");
+      }
+    } else if (st === 0){                   // 영상 끝
+      if (state.phase === "playing" || state.phase === "buffering"){
+        cancelAnimationFrame(state.raf); state.raf = 0;
+        state.phase = "stopped";
+        setStatus("stopped", "정지");
+        if (state.target > 0) renderTimer(state.target, state.target);
+      }
+    }
+  }
+
+  function onYtError(e){
+    var code = e && e.data;
+    var item = cur();
+    cancelAnimationFrame(state.raf); state.raf = 0;
+    state.phase = "error"; state.armed = 0; state.target = 0;
+    clearTimeout(state.wd);
+    setStatus("error", "재생 불가");
+    renderTimer(0, 0);
+    if (state.mode === "yt" && item){
+      item.err = true;
+      renderQueue();
+      toast("이 곡은 임베드 재생이 안 됩니다 (오류 " + code + ") · 다음 곡으로 넘어갑니다", true);
+      setTimeout(function(){
+        if (state.mode === "yt" && item.err) next(true);
+      }, 1500);
+    }
+  }
+
+  /* ---------- 재생 공통 ---------- */
+  var audio = $("#audio");
+
+  function pauseEverything(){
+    if (ytReady && yt && yt.pauseVideo){ try { yt.pauseVideo(); } catch(e){} }
+    if (audio && !audio.paused){ try { audio.pause(); } catch(e){} }
+  }
+
+  function cleanupPlayback(){
+    state.token++;                    // 진행 중이던 측정/타이머 무효화
+    cancelAnimationFrame(state.raf); state.raf = 0;
+    clearTimeout(state.wd); state.wd = 0;
+    state.armed = 0;
+    state.phase = "idle";
+    state.target = 0;
+    pauseEverything();
+    setStatus("idle", "준비됨");
+    renderTimer(0, 0);
+    return state.token;
+  }
+
+  function currentTime(){
+    if (state.mode === "yt"){
+      try { return (ytReady && yt && yt.getCurrentTime()) ? yt.getCurrentTime() : 0; } catch(e){ return 0; }
+    }
+    return audio.currentTime || 0;
+  }
+
+  function beginMeasure(token){
+    if (token !== state.token) return;
+    state.phase = "playing";
+    setStatus("playing", "재생 중");
+    state.startVT = currentTime();
+    state.startWall = performance.now();
+    loop(token);
+  }
+
+  function loop(token){
+    if (token !== state.token) return;
+    var elapsed = Math.max(0, currentTime() - state.startVT);
+    var wall = (performance.now() - state.startWall) / 1000;
+    var target = state.target;
+
+    renderTimer(target > 0 ? Math.min(elapsed, target) : elapsed, target);
+
+    if (target > 0 && elapsed >= target - 0.015){ finishAttempt(true); return; }
+    if (target > 0 && wall - elapsed > 5){        // 버퍼링이 길어 영상 시간이 안 흐르는 경우
+      finishAttempt(false); return;
+    }
+    state.raf = requestAnimationFrame(function(){ loop(token); });
+  }
+
+  function finishAttempt(completed){
+    var heard = Math.max(0, currentTime() - state.startVT);
+    cancelAnimationFrame(state.raf); state.raf = 0;
+    pauseEverything();
+    state.phase = "stopped";
+    setStatus("stopped", "정지");
+    if (state.target > 0) renderTimer(completed ? state.target : Math.min(heard, state.target), state.target);
+    if (!completed) toast("버퍼링이 길어 일찍 멈췄어요 · 잠시 후 다시 시도해 주세요", true);
+  }
+
+  /* ---------- 유튜브 재생 ---------- */
+  function songStart(item){
+    return Math.max(0, (item.start || 0) + (item.nudge || 0));
+  }
+
+  function waitSeek(start, token){
+    return new Promise(function(res){
+      var tries = 0;
+      yt.seekTo(start, true);
+      (function check(){
+        if (token !== state.token) return res(false);
+        var t = 0;
+        try { t = yt.getCurrentTime() || 0; } catch(e){}
+        if (Math.abs(t - start) < 0.4 || tries > 40) return res(true);
+        tries++;
+        setTimeout(check, 60);
+      })();
+    });
+  }
+
+  function playYt(sec){
+    var item = cur();
+    if (!item) return;
+    if (!item.yt){ toast("재생할 영상이 없어요", true); return; }
+
+    ensurePlayer().then(function(){
+      var token = cleanupPlayback();
+      state.target = sec;
+      state.phase = "buffering";
+      state.armed = token;
+      setStatus("buffering", "버퍼링 중...");
+      renderTimer(0, sec);
+
+      var start = songStart(item);
+      var loaded = "";
+      try { loaded = (yt.getVideoData() || {}).video_id || ""; } catch(e){}
+
+      var begin = function(){
+        waitSeek(start, token).then(function(ok){
+          if (!ok || token !== state.token) return;
+          try { yt.playVideo(); } catch(e){}
+        });
+      };
+
+      if (loaded !== item.yt){
+        try { yt.loadVideoById({ videoId: item.yt, startSeconds: start }); } catch(e){ begin(); }
+      } else {
+        try { yt.seekTo(start, true); } catch(e){}
+        begin();
+      }
+
+      state.wd = setTimeout(function(){
+        if (token === state.token && state.phase === "buffering"){
+          setStatus("buffering", "버퍼링 중... (지연)");
+        }
+      }, 8000);
+
+      setTimeout(function(){ if (token === state.token) refreshMeta(item); }, 900);
+      setTimeout(function(){ if (token === state.token) refreshMeta(item); }, 2400);
+    }).catch(function(){
+      setStatus("error", "플레이어 오류");
+      toast("유튜브 플레이어를 불러오지 못했어요 · 인터넷 연결을 확인해 주세요", true);
+    });
+  }
+
+  function refreshMeta(item){
+    if (!item || item.kind !== "yt" || !ytReady) return;
+    var data = null;
+    try { data = yt.getVideoData(); } catch(e){}
+    if (!data || !data.title) return;
+    if (item.custom && (!item.title || item.title === "불러오는 중...")){
+      item.title = cleanTitle(data.title);
+      item.artist = (data.author || "").replace(/ - Topic$/, "");
+      renderAnswer(); renderQueue();
+    }
+  }
+
+  function cleanTitle(t){
+    return String(t || "")
+      .replace(/\s*[\(\[]\s*(official\s*)?(music\s*)?(video|mv|m\/v|lyric[s]?|audio|performance|choreography)[^\)\]]*[\)\]]/ig, "")
+      .replace(/\s+(Official\s+)?(MV|M\/V|Music Video|Video)\s*$/i, "")
+      .replace(/\s{2,}/g, " ")
+      .trim() || String(t || "");
+  }
+
+  /* ---------- 로컬 재생 ---------- */
+  function playLocal(sec){
+    var item = cur();
+    if (!item || !item.url){ toast("먼저 음원 파일을 올려 주세요", true); return; }
+    var token = cleanupPlayback();
+    state.target = sec;
+    state.phase = "buffering";
+    state.armed = token;
+    setStatus("buffering", "준비 중...");
+    renderTimer(0, sec);
+
+    if (audio.getAttribute("src") !== item.url){
+      audio.setAttribute("src", item.url);
+      try { audio.load(); } catch(e){}
+    }
+    try { audio.currentTime = 0; } catch(e){}
+    audio.volume = 1;
+
+    var p = audio.play();
+    if (p && p.catch){
+      p.catch(function(err){
+        if (token === state.token){
+          state.phase = "error"; state.armed = 0;
+          setStatus("error", "재생 실패");
+          toast("파일을 재생할 수 없어요: " + (err && err.message ? err.message : err), true);
+        }
+      });
+    }
+  }
+
+  audio.addEventListener("playing", function(){
+    if (state.armed === state.token){
+      state.armed = 0;
+      beginMeasure(state.token);
+    } else if (state.phase === "playing"){
+      setStatus("playing", "재생 중");
+    }
+  });
+  audio.addEventListener("ended", function(){
+    if (state.phase === "playing" || state.phase === "buffering"){
+      cancelAnimationFrame(state.raf); state.raf = 0;
+      state.phase = "stopped";
+      setStatus("stopped", "정지");
+      if (state.target > 0) renderTimer(state.target, state.target);
+    }
+  });
+  audio.addEventListener("error", function(){
+    if (state.mode === "local" && (state.phase === "playing" || state.phase === "buffering")){
+      cancelAnimationFrame(state.raf); state.raf = 0;
+      state.phase = "error"; state.armed = 0;
+      setStatus("error", "재생 실패");
+      toast("파일 형식을 재생할 수 없어요 (MP3 · M4A · WAV 권장)", true);
+    }
+  });
+
+  /* ---------- 곡 이동 ---------- */
+  function resetRound(){
+    state.revealed = false;
+    state.hint = 0;
+    $("#screen").classList.remove("revealed");
+    $("#answer").classList.remove("revealed");
+    renderAnswer();
+  }
+
+  function loadCurrent(){
+    var item = cur();
+    if (state.mode === "yt" && item && item.yt){
+      ensurePlayer().then(function(){
+        var start = songStart(item);
+        var loaded = "";
+        try { loaded = (yt.getVideoData() || {}).video_id || ""; } catch(e){}
+        if (loaded !== item.yt){
+          try { yt.cueVideoById({ videoId: item.yt, startSeconds: start }); } catch(e){}
+        } else {
+          try { yt.seekTo(start, true); } catch(e){}
+        }
+        setTimeout(function(){ if (cur() === item) refreshMeta(item); }, 700);
+      }).catch(function(){});
+    }
+    if (state.mode === "local" && item && item.url){
+      if (audio.getAttribute("src") !== item.url){
+        audio.setAttribute("src", item.url);
+        try { audio.load(); } catch(e){}
+      }
+    }
+    renderQueue();
+    renderAnswer();
+  }
+
+  function goto(i, silent){
+    var l = list();
+    if (!l.length){ state.cur = 0; renderAll(); return; }
+    state.cur = ((i % l.length) + l.length) % l.length;
+    cleanupPlayback();
+    resetRound();
+    loadCurrent();
+    if (!silent) setStatus("idle", "준비됨");
+  }
+
+  function next(auto){
+    var l = list();
+    if (!l.length) return;
+    goto(state.cur + 1, !!auto);
+    if (auto) toast("다음 곡으로 넘어갔어요");
+  }
+
+  function prev(){ goto(state.cur - 1); }
+
+  function shuffle(){
+    var l = list();
+    if (l.length < 2){ toast("섞을 곡이 부족해요"); return; }
+    for (var i = l.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = l[i]; l[i] = l[j]; l[j] = t;
+    }
+    state.cur = 0;
+    cleanupPlayback();
+    resetRound();
+    loadCurrent();
+    toast("곡 순서를 섞었어요");
+  }
+
+  /* ---------- 렌더 ---------- */
+  function renderAnswer(){
+    var item = cur();
+    var titleEl = $("#ansTitle"), artistEl = $("#ansArtist");
+    var chipA = $("#chipArtist"), chipC = $("#chipCho");
+
+    if (!item){
+      titleEl.textContent = "곡을 추가해 주세요";
+      titleEl.classList.remove("hidden");
+      artistEl.textContent = state.mode === "local" ? "음원 파일을 올리면 바로 시작할 수 있어요" : "곡 목록이 비어 있어요";
+      chipA.hidden = chipC.hidden = true;
+      return;
+    }
+
+    if (state.revealed){
+      titleEl.textContent = item.title;
+      titleEl.classList.remove("hidden");
+      artistEl.textContent = item.artist || (state.mode === "local" ? "내 음원" : "");
+    } else {
+      titleEl.textContent = "???";
+      titleEl.classList.add("hidden");
+      artistEl.textContent = "정답 공개를 눌러 확인하세요";
+    }
+
+    if (state.hint >= 1 && item.artist){
+      chipA.hidden = false; chipA.textContent = "가수 " + item.artist;
+    } else { chipA.hidden = true; }
+
+    if (state.hint >= 2 && item.title){
+      var ch = chosung(item.title);
+      chipC.hidden = false;
+      chipC.textContent = "초성 " + ch;
+    } else { chipC.hidden = true; }
+
+    $("#answer").classList.toggle("revealed", state.revealed);
+    $("#screen").classList.toggle("revealed", state.revealed);
+    $("#btnReveal").innerHTML = state.revealed ? '정답 숨기기 <kbd>Space</kbd>' : '정답 공개 <kbd>Space</kbd>';
+    $("#veilBadge").textContent = (state.mode === "yt" ? "곡 " : "음원 ") + (state.cur + 1);
+    $("#startVal").textContent = (state.mode === "yt" && item ? songStart(item) : 0).toFixed(1) + "s";
+  }
+
+  function renderQueue(){
+    var l = list();
+    var q = $("#queue");
+    q.innerHTML = "";
+    $("#queueCount").textContent = l.length;
+    $("#queueNow").textContent = l.length ? ("현재 " + (state.cur + 1) + " / " + l.length) : "—";
+
+    l.forEach(function(item, i){
+      var li = document.createElement("li");
+      if (i === state.cur) li.className = "cur";
+      if (item.revealed) li.classList.add("done");
+      if (item.err) li.classList.add("err");
+
+      var btn = document.createElement("button");
+      btn.className = "sel";
+      btn.type = "button";
+      btn.innerHTML = '<span class="idx">' + (i + 1) + '</span>' +
+        '<span class="nm">' + escapeHtml(maskName(item, i)) + '</span>' +
+        '<span class="flag">✓</span>';
+      btn.addEventListener("click", function(){ goto(i); });
+      li.appendChild(btn);
+      q.appendChild(li);
+    });
+  }
+
+  function maskName(item, i){
+    if (item.err) return (state.mode === "yt" ? "곡 " : "음원 ") + (i + 1) + " · 재생 불가";
+    if (state.revealed && state.cur === i) return item.title;
+    return (state.mode === "yt" ? "곡 " : "음원 ") + (i + 1);
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+    });
+  }
+
+  var CHO = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+  function chosung(str){
+    var out = "";
+    var hasHangul = false;
+    for (var i = 0; i < str.length; i++){
+      var ch = str[i], code = ch.charCodeAt(0);
+      if (code >= 0xAC00 && code <= 0xD7A3){
+        hasHangul = true;
+        out += CHO[Math.floor((code - 0xAC00) / 588)];
+      } else if (/[A-Za-z]/.test(ch)){
+        out += ch.toUpperCase();
+      } else if (ch === " "){
+        out += " ";
+      }
+    }
+    // 영문 곡은 초성이 곧 정답이 되므로 첫 글지만 남깁니다.
+    if (!hasHangul){
+      return str.split(/\s+/).filter(Boolean).map(function(w){ return w[0]; }).join(" ") + "…";
+    }
+    return out.trim() || str;
+  }
+
+  function renderAll(){
+    document.body.dataset.mode = state.mode;
+    renderQueue();
+    renderAnswer();
+  }
+
+  /* ---------- 점수판 ---------- */
+  var SCORE_KEY = "introQuiz.scores.v1";
+
+  function loadScores(){
+    try{
+      var raw = localStorage.getItem(SCORE_KEY);
+      if (raw){
+        var arr = JSON.parse(raw);
+        if (Array.isArray(arr) && arr.length) return arr;
+      }
+    }catch(e){}
+    return [{ name:"1팀", score:0 }, { name:"2팀", score:0 }];
+  }
+  function saveScores(){
+    try{ localStorage.setItem(SCORE_KEY, JSON.stringify(state.scores)); }catch(e){}
+  }
+  function renderScores(){
+    var ul = $("#scoreList");
+    ul.innerHTML = "";
+    state.scores.forEach(function(s, i){
+      var li = document.createElement("li");
+      li.className = "score-row";
+
+      var input = document.createElement("input");
+      input.value = s.name;
+      input.setAttribute("aria-label", "참가자 이름");
+      input.addEventListener("input", function(){ s.name = input.value; saveScores(); });
+      input.addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); input.blur(); } });
+
+      var val = document.createElement("span");
+      val.className = "val";
+      val.textContent = s.score;
+
+      var plus = document.createElement("button");
+      plus.className = "plus"; plus.type = "button"; plus.textContent = "+1";
+      plus.addEventListener("click", function(){ s.score += 1; val.textContent = s.score; saveScores(); });
+
+      var minus = document.createElement("button");
+      minus.className = "minus"; minus.type = "button"; minus.textContent = "−";
+      minus.addEventListener("click", function(){ s.score = Math.max(0, s.score - 1); val.textContent = s.score; saveScores(); });
+
+      var del = document.createElement("button");
+      del.className = "del"; del.type = "button"; del.textContent = "×";
+      del.setAttribute("aria-label", "삭제");
+      del.addEventListener("click", function(){
+        state.scores.splice(i, 1);
+        saveScores(); renderScores();
+      });
+
+      li.appendChild(input); li.appendChild(val); li.appendChild(plus); li.appendChild(minus); li.appendChild(del);
+      ul.appendChild(li);
+    });
+  }
+
+  $("#scoreAdd").addEventListener("submit", function(e){
+    e.preventDefault();
+    var inp = $("#scoreName");
+    var name = (inp.value || "").trim();
+    if (!name) return;
+    state.scores.push({ name: name, score: 0 });
+    inp.value = "";
+    saveScores(); renderScores();
+  });
+
+  $("#btnScoreReset").addEventListener("click", function(){
+    state.scores.forEach(function(s){ s.score = 0; });
+    saveScores(); renderScores();
+    toast("점수를 0으로 되돌렸어요");
+  });
+
+  /* ---------- 버튼 ---------- */
+  function listen(sec){
+    if (state.mode === "yt") playYt(sec);
+    else playLocal(sec);
+  }
+
+  $$(".play-row .btn").forEach(function(b){
+    b.addEventListener("click", function(){ listen(Number(b.dataset.sec)); });
+  });
+
+  $("#btnStop").addEventListener("click", function(){
+    var t = cleanupPlayback();
+    setStatus("stopped", "정지");
+    return t;
+  });
+
+  $("#btnReveal").addEventListener("click", function(){
+    state.revealed = !state.revealed;
+    renderAnswer();
+    renderQueue();
+    if (state.revealed){
+      var item = cur();
+      if (item) item.revealed = true;
+      renderQueue();
+    }
+  });
+
+  $("#btnNext").addEventListener("click", function(){ next(false); });
+  $("#btnShuffle").addEventListener("click", shuffle);
+
+  $("#btnHint").addEventListener("click", function(){
+    state.hint = (state.hint + 1) % 3;
+    renderAnswer();
+    if (state.hint === 1) toast("가수 힌트를 공개했어요");
+    else if (state.hint === 2) toast("초성 힌트를 공개했어요");
+    else toast("힌트를 숨겼어요");
+  });
+
+  $$("[data-nudge]").forEach(function(b){
+    b.addEventListener("click", function(){
+      var item = cur();
+      if (!item || state.mode !== "yt"){ toast("프리셋 곡에서만 조정할 수 있어요"); return; }
+      var d = Number(b.dataset.nudge);
+      item.nudge = Math.max(-5, Math.min(30, (item.nudge || 0) + d));
+      cleanupPlayback();
+      $("#startVal").textContent = songStart(item).toFixed(1) + "s";
+      ensurePlayer().then(function(){
+        var loaded = "";
+        try { loaded = (yt.getVideoData() || {}).video_id || ""; } catch(e){}
+        if (loaded !== item.yt){
+          try { yt.cueVideoById({ videoId: item.yt, startSeconds: songStart(item) }); } catch(e){}
+        } else {
+          try { yt.seekTo(songStart(item), true); } catch(e){}
+        }
+      }).catch(function(){});
+    });
+  });
+
+  /* ---------- 모드 ---------- */
+  $$(".mode-btn").forEach(function(b){
+    b.addEventListener("click", function(){ switchMode(b.dataset.mode); });
+  });
+
+  function switchMode(mode){
+    if (mode === state.mode) return;
+    cleanupPlayback();
+    state.mode = mode;
+    state.cur = 0;
+    $$(".mode-btn").forEach(function(b){ b.classList.toggle("active", b.dataset.mode === mode); });
+    $("#addYt").hidden = mode !== "yt";
+    $("#fileDrop").hidden = mode !== "local";
+    $("#queueTitle").firstChild.nodeValue = mode === "yt" ? "곡 목록 " : "음원 목록 ";
+    document.body.dataset.mode = mode;
+    resetRound();
+    loadCurrent();
+    if (mode === "local" && !state.localItems.length){
+      toast("음원 파일(MP3 · M4A · WAV)을 올려 주세요");
+    }
+  }
+
+  /* ---------- 유튜브 링크 추가 ---------- */
+  function parseVideoId(input){
+    var s = String(input || "").trim();
+    if (!s) return "";
+    var m = s.match(/(?:v=|youtu\.be\/|\/embed\/|\/shorts\/|\/live\/)([A-Za-z0-9_-]{11})/);
+    if (m) return m[1];
+    if (/^[A-Za-z0-9_-]{11}$/.test(s)) return s;
+    return "";
+  }
+
+  $("#addYt").addEventListener("submit", function(e){
+    e.preventDefault();
+    var inp = $("#ytUrl");
+    var id = parseVideoId(inp.value);
+    if (!id){ toast("유튜브 링크나 영상 ID를 확인해 주세요", true); return; }
+    if (state.ytItems.some(function(x){ return x.yt === id; })){ toast("이미 목록에 있는 영상이에요"); inp.value = ""; return; }
+    var item = { kind:"yt", title:"불러오는 중...", artist:"", yt:id, start:0, nudge:0, revealed:false, err:false, custom:true };
+    state.ytItems.push(item);
+    inp.value = "";
+    state.cur = state.ytItems.length - 1;
+    cleanupPlayback();
+    resetRound();
+    if (state.mode !== "yt") switchMode("yt");
+    loadCurrent();
+    toast("곡을 추가했어요 · 제목을 불러오는 중");
+  });
+
+  /* ---------- 파일 ---------- */
+  var fileDrop = $("#fileDrop"), fileInput = $("#fileInput");
+
+  function addFiles(files){
+    var arr = Array.prototype.slice.call(files || []);
+    var ok = arr.filter(function(f){
+      return /^audio\//.test(f.type || "") || /\.(mp3|m4a|wav|ogg|flac|aac|mp4)$/i.test(f.name || "");
+    });
+    if (!ok.length){ toast("음원 파일(MP3/M4A/WAV)을 올려 주세요", true); return; }
+
+    ok.forEach(function(f){
+      var name = (f.name || "음원").replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim();
+      state.localItems.push({
+        kind:"local",
+        title: name || "제목 없음",
+        artist: "내 음원",
+        file: f,
+        url: URL.createObjectURL(f),
+        revealed: false
+      });
+    });
+
+    var firstNew = state.localItems.length - ok.length;
+    if (state.mode !== "local") switchMode("local");
+    state.cur = firstNew;
+    cleanupPlayback();
+    resetRound();
+    loadCurrent();
+    toast(ok.length + "곡을 추가했어요 (파일명이 정답)");
+  }
+
+  $("#filePick").addEventListener("click", function(){ fileInput.click(); });
+  fileInput.addEventListener("change", function(){
+    addFiles(fileInput.files);
+    fileInput.value = "";
+  });
+  ["dragenter","dragover"].forEach(function(ev){
+    fileDrop.addEventListener(ev, function(e){ e.preventDefault(); fileDrop.classList.add("over"); });
+  });
+  ["dragleave","drop"].forEach(function(ev){
+    fileDrop.addEventListener(ev, function(e){ e.preventDefault(); fileDrop.classList.remove("over"); });
+  });
+  fileDrop.addEventListener("drop", function(e){
+    if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+  });
+  $("#fileClear").addEventListener("click", function(){
+    if (!state.localItems.length) return;
+    cleanupPlayback();
+    state.localItems.forEach(function(it){ try { URL.revokeObjectURL(it.url); } catch(e){} });
+    state.localItems = [];
+    state.cur = 0;
+    audio.removeAttribute("src");
+    try { audio.load(); } catch(e){}
+    resetRound();
+    renderAll();
+    toast("음원 목록을 비웠어요");
+  });
+  window.addEventListener("beforeunload", function(){
+    state.localItems.forEach(function(it){ try { URL.revokeObjectURL(it.url); } catch(e){} });
+  });
+
+  /* ---------- 단축키 ---------- */
+  document.addEventListener("keydown", function(e){
+    var t = e.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.repeat) return;
+
+    if (e.key === "1"){ e.preventDefault(); listen(1); }
+    else if (e.key === "2"){ e.preventDefault(); listen(3); }
+    else if (e.key === "3"){ e.preventDefault(); listen(5); }
+    else if (e.code === "Space"){ e.preventDefault(); $("#btnReveal").click(); }
+    else if (e.key === "ArrowRight"){ e.preventDefault(); next(false); }
+    else if (e.key === "ArrowLeft"){ e.preventDefault(); prev(); }
+    else if (e.key.toLowerCase() === "h"){ e.preventDefault(); $("#btnHint").click(); }
+    else if (e.key.toLowerCase() === "s"){ e.preventDefault(); shuffle(); }
+    else if (e.key === "Escape"){ cleanupPlayback(); setStatus("stopped", "정지"); }
+  });
+
+  /* ---------- 시작 ---------- */
+  buildPresets();
+  state.scores = loadScores();
+  renderScores();
+  renderAll();
+  setStatus("idle", "준비됨");
+  renderTimer(0, 0);
+  loadCurrent();
+})();
+</script>
+</body>
+</html>
