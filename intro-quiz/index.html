@@ -153,7 +153,8 @@
   .taphelp .th-s{font-size:12.5px;color:#c3cbe0;line-height:1.6;word-break:keep-all}
   @keyframes tapfade{from{opacity:0}to{opacity:1}}
   /* 가림막을 통과시켜 유튜브 플레이어를 직접 누를 수 있게 (영상은 계속 흐리게) */
-  .screen.tapallow .veil{pointer-events:none;opacity:.45}
+  .screen.tapallow .veil{pointer-events:none;opacity:.12}
+  .screen.tapallow .yt-host{filter:blur(14px) brightness(.7);transform:none}
   .screen.tapallow .taphelp{pointer-events:none}
 
   /* ---------- answer ---------- */
